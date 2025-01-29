@@ -1,0 +1,8 @@
+node_modules
+postgres
+.git
+.github
+dist
+postgres
+postgres/test
+.env.template
