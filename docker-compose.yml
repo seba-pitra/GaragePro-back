@@ -2,7 +2,7 @@ version: '3'
 
 services:
   db:
-    image: postgres:14.3
+    image: postgres:15
     restart: always
     ports:
       - '${DB_PORT}:5432'
@@ -10,5 +10,6 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
+    container_name: garagepro
     volumes:
       - ./postgres:/var/lib/postgresql/data
