@@ -1,26 +1,71 @@
-import { Injectable } from '@nestjs/common';
-import { CreateAuthDto } from './dto/create-auth.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { JwtService } from '@nestjs/jwt';
+
+import { CreateUserDto } from './dto/create-user.dto';
+import { LoginUserDto } from './dto/login-user.dto';
+import { User } from './entities/user.entity';
+import { JwtPayload } from './interfaces/jwt-payload.interface';
+import { comparePasswords, encryptPassword } from '@/utils/encrypt';
 
 @Injectable()
 export class AuthService {
-  create(createAuthDto: CreateAuthDto) {
-    return 'This action adds a new auth';
+  constructor(
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+
+    private readonly jwtService: JwtService,
+  ) {}
+
+  async create(createUserDto: CreateUserDto) {
+    const { email } = createUserDto;
+
+    const foundUser = await this.userRepository.findOneBy({ email });
+    if (foundUser) throw new BadRequestException(`User already exists with email: ${email}`);
+
+    let { password } = createUserDto;
+    password = await encryptPassword(password);
+
+    const newUser = this.userRepository.create({ ...createUserDto, password });
+    await this.userRepository.save(newUser);
+
+    delete newUser.id;
+    delete newUser.password;
+    delete newUser.createdAt;
+
+    return {
+      user: newUser,
+      token: this.getNewToken({ email }),
+    };
   }
 
-  findAll() {
-    return `This action returns all auth`;
+  async login(loginUserDto: LoginUserDto) {
+    const { email, password } = loginUserDto;
+
+    const user = await this.userRepository.findOneBy({ email });
+    if (!user) throw new NotFoundException(`User not found with email: ${email}`);
+
+    const passwordMatch = await comparePasswords(password, user.password);
+    if (!passwordMatch) throw new UnauthorizedException('Password is not correct');
+
+    delete user.id;
+    delete user.password;
+    delete user.createdAt;
+
+    return {
+      user,
+      token: this.getNewToken({ email }),
+    };
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} auth`;
-  }
-
-  update(id: number, updateAuthDto: UpdateAuthDto) {
-    return `This action updates a #${id} auth`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} auth`;
+  private getNewToken(payload: JwtPayload) {
+    const token = this.jwtService.sign(payload);
+    return token;
   }
 }

@@ -7,7 +7,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { joiValidationSchema } from './config/joi.validation';
 import { ReservationsModule } from './modules/reservations/reservations.module';
 import { Reservation } from './modules/reservations/entities/reservation.entity';
-import { User } from './modules/auth/entities/auth.entity';
+import { User } from './modules/auth/entities/user.entity';
 
 @Module({
   imports: [
