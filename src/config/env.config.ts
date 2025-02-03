@@ -8,4 +8,5 @@ export const envConfiguration = () => ({
     password: process.env.DB_PASSWORD,
     name: process.env.DB_NAME,
   },
+  jwtSecretToken: process.env.JWT_TOKEN_SECRET,
 });
