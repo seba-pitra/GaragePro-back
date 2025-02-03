@@ -18,7 +18,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 
     TypeOrmModule.forFeature([User]),
 
-    PassportModule.register({ defaultStrategy: '2h' }),
+    PassportModule.register({ defaultStrategy: 'jwt' }),
 
     JwtModule.registerAsync({
       imports: [ConfigModule],
