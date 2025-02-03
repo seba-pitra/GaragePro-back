@@ -1,4 +1,3 @@
-import * as bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-jwt';
@@ -24,20 +23,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(jwtPayload: JwtPayload) {
-    const { email, password } = jwtPayload;
+  async validate(jwtPayload: JwtPayload): Promise<User> {
+    const { email } = jwtPayload;
 
     const user = await this.userRepository.findOneBy({ email });
-    if (!user) throw new UnauthorizedException();
-
-    const passwordMatch = await this.comparePasswords(password, user.password);
-    if (!passwordMatch) throw new UnauthorizedException();
+    if (!user) throw new UnauthorizedException('Token not valid');
 
     return user;
-  }
-
-  private async comparePasswords(requestPassword: string, userPassword: string) {
-    const match = await bcrypt.compare(requestPassword, userPassword);
-    return match;
   }
 }

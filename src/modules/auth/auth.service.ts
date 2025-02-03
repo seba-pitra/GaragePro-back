@@ -1,4 +1,3 @@
-import * as bcrypt from 'bcrypt';
 import {
   BadRequestException,
   Injectable,
@@ -13,6 +12,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import { User } from './entities/user.entity';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
+import { comparePasswords, encryptPassword } from '@/utils/encrypt';
 
 @Injectable()
 export class AuthService {
@@ -27,10 +27,10 @@ export class AuthService {
     const { email } = createUserDto;
 
     const foundUser = await this.userRepository.findOneBy({ email });
-    if (foundUser) throw new BadRequestException();
+    if (foundUser) throw new BadRequestException(`User already exists with email: ${email}`);
 
     let { password } = createUserDto;
-    password = await this.encryptPassword(password);
+    password = await encryptPassword(password);
 
     const newUser = this.userRepository.create({ ...createUserDto, password });
     await this.userRepository.save(newUser);
@@ -41,7 +41,7 @@ export class AuthService {
 
     return {
       user: newUser,
-      token: this.getNewToken({ email, password }),
+      token: this.getNewToken({ email }),
     };
   }
 
@@ -49,10 +49,10 @@ export class AuthService {
     const { email, password } = loginUserDto;
 
     const user = await this.userRepository.findOneBy({ email });
-    if (!user) throw new NotFoundException();
+    if (!user) throw new NotFoundException(`User not found with email: ${email}`);
 
-    const passwordMatch = await this.comparePasswords(password, user.password);
-    if (!passwordMatch) throw new UnauthorizedException();
+    const passwordMatch = await comparePasswords(password, user.password);
+    if (!passwordMatch) throw new UnauthorizedException('Password is not correct');
 
     delete user.id;
     delete user.password;
@@ -60,22 +60,12 @@ export class AuthService {
 
     return {
       user,
-      token: this.getNewToken({ email, password }),
+      token: this.getNewToken({ email }),
     };
   }
 
   private getNewToken(payload: JwtPayload) {
     const token = this.jwtService.sign(payload);
     return token;
-  }
-
-  private async comparePasswords(requestPassword: string, userPassword: string) {
-    const match = await bcrypt.compare(requestPassword, userPassword);
-    return match;
-  }
-
-  private async encryptPassword(password: string) {
-    const encryptedPassword = await bcrypt.hash(password, 10);
-    return encryptedPassword;
   }
 }

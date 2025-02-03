@@ -1,7 +1,8 @@
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
 import { Logger, ValidationPipe } from '@nestjs/common';
+import { AppModule } from './app.module';
 import { envConfiguration } from './config/env.config';
+import { HttpExceptionFilter } from './filters/http-exception.filters';
 
 async function bootstrap() {
   const logger = new Logger('MAIN');
@@ -19,6 +20,8 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
     }),
   );
+
+  app.useGlobalFilters(new HttpExceptionFilter());
 
   await app.listen(port);
   logger.log(`App running on port ${port}`);
