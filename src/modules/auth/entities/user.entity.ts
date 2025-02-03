@@ -14,7 +14,7 @@ export class User {
   @Column('varchar', { length: 255, unique: true })
   email: string;
 
-  @Column('varchar', { length: 255, select: false })
+  @Column('varchar', { length: 255 })
   password: string;
 
   @Column('text', { array: true, default: '{customer}' })

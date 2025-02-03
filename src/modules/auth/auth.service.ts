@@ -1,11 +1,16 @@
 import * as bcrypt from 'bcrypt';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
 
 import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateAuthDto } from './dto/login-user.dto';
+import { LoginUserDto } from './dto/login-user.dto';
 import { User } from './entities/user.entity';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 
@@ -40,25 +45,33 @@ export class AuthService {
     };
   }
 
-  findAll() {
-    return `This action returns all auth`;
-  }
+  async login(loginUserDto: LoginUserDto) {
+    const { email, password } = loginUserDto;
 
-  findOne(id: number) {
-    return `This action returns a #${id} auth`;
-  }
+    const user = await this.userRepository.findOneBy({ email });
+    if (!user) throw new NotFoundException();
 
-  update(id: number, updateAuthDto: UpdateAuthDto) {
-    return `This action updates a #${id} auth`;
-  }
+    const passwordMatch = await this.comparePasswords(password, user.password);
+    if (!passwordMatch) throw new UnauthorizedException();
 
-  remove(id: number) {
-    return `This action removes a #${id} auth`;
+    delete user.id;
+    delete user.password;
+    delete user.createdAt;
+
+    return {
+      user,
+      token: this.getNewToken({ email, password }),
+    };
   }
 
   private getNewToken(payload: JwtPayload) {
     const token = this.jwtService.sign(payload);
     return token;
+  }
+
+  private async comparePasswords(requestPassword: string, userPassword: string) {
+    const match = await bcrypt.compare(requestPassword, userPassword);
+    return match;
   }
 
   private async encryptPassword(password: string) {
