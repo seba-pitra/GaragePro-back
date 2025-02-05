@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 
@@ -26,7 +26,7 @@ export class VehiclesService {
 
     const foundVehicle = await this.vehicleRepository.findOneBy({ plate_number: plateNumber });
     if (foundVehicle) {
-      throw new NotFoundException(`Vehicle already exists with plate number: ${plateNumber}`);
+      throw new BadRequestException(`Vehicle already exists with plate number: ${plateNumber}`);
     }
 
     const newVehicle = this.vehicleRepository.create({
