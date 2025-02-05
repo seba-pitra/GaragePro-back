@@ -31,6 +31,7 @@
     "bcrypt": "^5.1.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
+    "dotenv": "^16.4.7",
     "joi": "^17.13.3",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
@@ -70,7 +71,10 @@
       "json",
       "ts"
     ],
-    "rootDir": "src",
+    "moduleNameMapper": {
+      "^@/(.*)$": "<rootDir>/src/$1"
+    },
+    "rootDir": ".",
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
