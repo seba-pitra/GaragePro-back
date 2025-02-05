@@ -3,6 +3,7 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { envConfiguration } from './config/env.config';
 import { HttpExceptionFilter } from './common/filters/http-exception.filters';
+import { TransformResponseInterceptor } from './common/interceptors/transform-response.interceptor';
 
 async function bootstrap() {
   const logger = new Logger('MAIN');
@@ -20,7 +21,7 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
     }),
   );
-
+  app.useGlobalInterceptors(new TransformResponseInterceptor());
   app.useGlobalFilters(new HttpExceptionFilter());
 
   await app.listen(port);
