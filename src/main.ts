@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { envConfiguration } from './config/env.config';
-import { HttpExceptionFilter } from './filters/http-exception.filters';
+import { HttpExceptionFilter } from './common/filters/http-exception.filters';
 
 async function bootstrap() {
   const logger = new Logger('MAIN');
