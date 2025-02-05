@@ -82,7 +82,7 @@ export class VehiclesService {
 
     await this.vehicleRepository.update(id, updateVehicleDto);
 
-    const vehicle = await this.findOne(id);
+    const { vehicle } = await this.findOne(id);
 
     return { vehicle };
   }
@@ -90,7 +90,7 @@ export class VehiclesService {
   async remove(id: string) {
     await this.vehicleRepository.update(id, { is_active: false });
 
-    const vehicle = await this.findOne(id);
+    const { vehicle } = await this.findOne(id);
 
     return { vehicle };
   }
