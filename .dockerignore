@@ -4,5 +4,5 @@ postgres
 .github
 dist
 postgres
-postgres/test
+postgres-test
 .env.template
