@@ -11,7 +11,7 @@ export class VehiclesController {
   constructor(private readonly vehiclesService: VehiclesService) {}
 
   @Post()
-  @Auth(ValidRoles.customer)
+  @Auth(ValidRoles.customer, ValidRoles.admin)
   create(@Body() createVehicleDto: CreateVehicleDto) {
     return this.vehiclesService.create(createVehicleDto);
   }
@@ -23,25 +23,25 @@ export class VehiclesController {
   }
 
   @Get('/user/:userId')
-  @Auth(ValidRoles.customer)
+  @Auth(ValidRoles.customer, ValidRoles.admin)
   findByUserId(@Param('userId') userId: string, @Query() paginationDto: PaginationDto) {
     return this.vehiclesService.findByUserId(userId, paginationDto);
   }
 
   @Get(':id')
-  @Auth(ValidRoles.customer)
+  @Auth(ValidRoles.customer, ValidRoles.admin)
   findOne(@Param('id') id: string) {
     return this.vehiclesService.findOne(id);
   }
 
   @Patch(':id')
-  @Auth(ValidRoles.customer)
+  @Auth(ValidRoles.customer, ValidRoles.admin)
   update(@Param('id') id: string, @Body() updateVehicleDto: UpdateVehicleDto) {
     return this.vehiclesService.update(id, updateVehicleDto);
   }
 
   @Delete(':id')
-  @Auth(ValidRoles.customer)
+  @Auth(ValidRoles.customer, ValidRoles.admin)
   remove(@Param('id') id: string) {
     return this.vehiclesService.remove(id);
   }

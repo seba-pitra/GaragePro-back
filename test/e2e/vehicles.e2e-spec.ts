@@ -13,11 +13,16 @@ import { createTestDatabase } from '../database/init';
 import { HttpExceptionFilter } from '@/common/filters/http-exception.filters';
 import { CreateVehicleDto } from '@/modules/vehicles/dto/create-vehicle.dto';
 import { UpdateVehicleDto } from '@/modules/vehicles/dto/update-vehicle.dto';
+import { AuthModule } from '@/modules/auth/auth.module';
+import { CreateUserDto } from '@/modules/auth/dto/create-user.dto';
+import { ValidRoles } from '@/modules/auth/interfaces/valid-roles.interface';
 
 describe('Vehicles (e2e)', () => {
   const dataSource = createTestDatabase();
 
   let app: INestApplication;
+
+  let token: string;
 
   beforeAll(async () => {
     await dataSource.initialize();
@@ -45,7 +50,7 @@ describe('Vehicles (e2e)', () => {
           },
         }),
         TypeOrmModule.forFeature([User, Vehicle]),
-
+        AuthModule,
         VehiclesModule,
       ],
       providers: [
@@ -63,6 +68,26 @@ describe('Vehicles (e2e)', () => {
     app = moduleFixture.createNestApplication();
 
     await app.init();
+  });
+
+  beforeEach(async () => {
+    const createUserDto: CreateUserDto = {
+      firstName: 'test',
+      lastName: 'test',
+      email: 'test.abc123@gmail.com',
+      password: 'testPassword1',
+      phone: '11112111122',
+    };
+    const AuthRes = await request(app.getHttpServer()).post('/auth/register').send(createUserDto);
+    token = AuthRes.body.data.token;
+
+    await dataSource
+      .createQueryBuilder()
+      .update(User)
+      .set({ roles: `{${ValidRoles.admin}}` })
+      .where('email = :email', { email: createUserDto.email })
+      .returning('*')
+      .execute();
   });
 
   afterEach(async () => {
@@ -83,6 +108,7 @@ describe('Vehicles (e2e)', () => {
     const { body } = await request(app.getHttpServer())
       .post('/vehicles')
       .send(createVehicleDto)
+      .set('Authorization', `Bearer  ${token}`)
       .expect(201);
 
     expect(body).toHaveProperty('data');
@@ -112,6 +138,7 @@ describe('Vehicles (e2e)', () => {
 
     const { body } = await request(app.getHttpServer())
       .post('/vehicles')
+      .set('Authorization', `Bearer  ${token}`)
       .send(createVehicleDto)
       .expect(400);
 
@@ -133,6 +160,7 @@ describe('Vehicles (e2e)', () => {
 
     const { body } = await request(app.getHttpServer())
       .get('/vehicles?limit=2&offset=0')
+      .set('Authorization', `Bearer  ${token}`)
       .expect(200);
 
     expect(body).toHaveProperty('data');
@@ -162,7 +190,11 @@ describe('Vehicles (e2e)', () => {
   });
 
   it(`/GET /vehicles should throw an error if there are not vehicles`, async () => {
-    const { body } = await request(app.getHttpServer()).get('/vehicles').expect(404);
+    const { body } = await request(app.getHttpServer())
+      .get('/vehicles')
+      .set('Authorization', `Bearer  ${token}`)
+      .expect(404);
+
     expect(body).toEqual({
       data: null,
       error: {
@@ -181,6 +213,7 @@ describe('Vehicles (e2e)', () => {
 
     const { body } = await request(app.getHttpServer())
       .get(`/vehicles/user/${user.id}?limit=2&offset=0`)
+      .set('Authorization', `Bearer  ${token}`)
       .expect(200);
 
     expect(body).toHaveProperty('data');
@@ -214,6 +247,7 @@ describe('Vehicles (e2e)', () => {
 
     const { body } = await request(app.getHttpServer())
       .get(`/vehicles/user/${userId}?limit=2&offset=0`)
+      .set('Authorization', `Bearer  ${token}`)
       .expect(404);
 
     expect(body).toEqual({
@@ -234,6 +268,7 @@ describe('Vehicles (e2e)', () => {
 
     const { body } = await request(app.getHttpServer())
       .get(`/vehicles/${vehicles[0].id}`)
+      .set('Authorization', `Bearer  ${token}`)
       .expect(200);
 
     expect(body).toHaveProperty('data');
@@ -255,6 +290,7 @@ describe('Vehicles (e2e)', () => {
 
     const { body } = await request(app.getHttpServer())
       .get(`/vehicles/${fakeVehicleId}`)
+      .set('Authorization', `Bearer  ${token}`)
       .expect(404);
 
     expect(body).toEqual({
@@ -279,6 +315,7 @@ describe('Vehicles (e2e)', () => {
 
     const { body } = await request(app.getHttpServer())
       .patch(`/vehicles/${vehicles[0].id}`)
+      .set('Authorization', `Bearer  ${token}`)
       .send(updateVehicleDto)
       .expect(200);
 
@@ -305,6 +342,7 @@ describe('Vehicles (e2e)', () => {
 
     const { body } = await request(app.getHttpServer())
       .patch(`/vehicles/${fakeVehicleId}`)
+      .set('Authorization', `Bearer  ${token}`)
       .send(updateVehicleDto)
       .expect(404);
 
@@ -326,6 +364,7 @@ describe('Vehicles (e2e)', () => {
 
     const { body } = await request(app.getHttpServer())
       .delete(`/vehicles/${vehicles[0].id}`)
+      .set('Authorization', `Bearer  ${token}`)
       .expect(200);
 
     expect(body).toHaveProperty('data');
@@ -347,6 +386,7 @@ describe('Vehicles (e2e)', () => {
 
     const { body } = await request(app.getHttpServer())
       .delete(`/vehicles/${fakeVehicleId}`)
+      .set('Authorization', `Bearer  ${token}`)
       .expect(404);
 
     expect(body).toEqual({
