@@ -24,8 +24,13 @@ import { JwtStrategy } from './strategies/jwt.strategy';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
+        const jwtSecret =
+          configService.get('environment') === 'production'
+            ? configService.get('jwtSecretToken')
+            : 'test';
+
         return {
-          secret: configService.get('JWT_TOKEN_SECRET'),
+          secret: jwtSecret,
           signOptions: { expiresIn: '2h' },
         };
       },

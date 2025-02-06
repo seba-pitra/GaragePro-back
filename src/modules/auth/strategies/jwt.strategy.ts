@@ -17,8 +17,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
     private readonly configService: ConfigService,
   ) {
+    const jwtSecret =
+      configService.get('environment') === 'production'
+        ? configService.get('jwtSecretToken')
+        : 'test';
+
     super({
-      secretOrKey: configService.get('jwtSecretToken'),
+      secretOrKey: jwtSecret,
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
     });
   }
