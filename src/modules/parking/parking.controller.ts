@@ -7,6 +7,7 @@ import { User } from '../auth/entities/user.entity';
 import { Auth } from '../auth/decorators/auth.decorator';
 import { ValidRoles } from '../auth/interfaces/valid-roles.interface';
 import { PaginationDto } from '@/common/dtos/pagination.dto';
+import { UnoccupyReservationDto } from './dto/unoccupy-reservation.dto';
 
 @Controller('parking')
 export class ParkingController {
@@ -19,18 +20,19 @@ export class ParkingController {
   }
 
   @Get()
+  @Auth(ValidRoles.admin)
   findAll(@Query() paginationDto: PaginationDto) {
     return this.parkingService.findAll(paginationDto);
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.parkingService.findOne(+id);
+    return this.parkingService.findOne(id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateParkingDto: UpdateParkingDto) {
-    return this.parkingService.update(+id, updateParkingDto);
+  @Patch('/unoccupy/:id')
+  update(@Param('id') id: string, @Body() unoccupyReservationDto: UnoccupyReservationDto) {
+    return this.parkingService.update(id, unoccupyReservationDto);
   }
 
   @Delete(':id')

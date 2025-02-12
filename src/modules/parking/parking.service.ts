@@ -1,5 +1,5 @@
 import { Repository } from 'typeorm';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { CreateReservationDto } from './dto/create-reservation.dto';
@@ -9,6 +9,7 @@ import { ReservationSlot } from './entities/reservation-slot.entity';
 import { User } from '../auth/entities/user.entity';
 import { ParkingSlotsService } from '../parking-slots/parking-slots.service';
 import { PaginationDto } from '@/common/dtos/pagination.dto';
+import { UnoccupyReservationDto } from './dto/unoccupy-reservation.dto';
 
 @Injectable()
 export class ParkingService {
@@ -24,6 +25,10 @@ export class ParkingService {
 
   async create(user: User, createReservationDto: CreateReservationDto) {
     const { slotCode } = createReservationDto;
+
+    const parkingSlot = await this.parkingSlotService.findOneBySlotCode(slotCode);
+
+    if (parkingSlot.is_reserved) throw new BadRequestException('Parking Slot was already reserved');
 
     const updatedSlot = await this.parkingSlotService.update(
       { slot_code: slotCode },
@@ -72,12 +77,31 @@ export class ParkingService {
     return reservations;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} parking`;
+  async findOne(id: string) {
+    const reservation = await this.reservationSlotRepository
+      .createQueryBuilder('reservation_slot')
+      .where({ id })
+      .leftJoinAndSelect('reservation_slot.reservation', 'reservation')
+      .leftJoinAndSelect('reservation_slot.parking_slot', 'parkingSlot')
+      .getOne();
+
+    if (!reservation) throw new NotFoundException('Reservation not found');
+
+    return reservation;
   }
 
-  update(id: number, updateParkingDto: UpdateParkingDto) {
-    return `This action updates a #${id} parking`;
+  async update(id: string, unoccupyReservationDto: UnoccupyReservationDto) {
+    await this.findOne(id);
+
+    const { actualExitTime, slotCode } = unoccupyReservationDto;
+
+    await this.parkingSlotService.update({ slot_code: slotCode }, { IsReserved: false });
+
+    // TODO: create total cost based in entry,exit times and penalty
+    await this.reservationRepository.update(id, {
+      actual_exit_time: actualExitTime,
+      is_paid: true,
+    });
   }
 
   remove(id: number) {
