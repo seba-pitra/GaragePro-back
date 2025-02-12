@@ -3,7 +3,6 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { CreateReservationDto } from './dto/create-reservation.dto';
-import { UpdateParkingDto } from './dto/update-parking.dto';
 import { Reservation } from './entities/reservation.entity';
 import { ReservationSlot } from './entities/reservation-slot.entity';
 import { User } from '../auth/entities/user.entity';
@@ -51,16 +50,16 @@ export class ParkingService {
     const { actualExitTime } = createTotalCostDto;
     const { reservation } = await this.findOne(id);
 
-    const totalCost = this.calculateCost({
+    const { basicCost, extraTimeUsedMinutes, penaltyCost, totalCost } = this.calculateCost({
       actualEntryDate: reservation.actual_entry_time,
       actualExitDate: new Date(actualExitTime),
       basicCost: +reservation.basic_cost,
       durationInMinutes: reservation.duration_in_minutes,
-      penaltyRatePerMinute: 2,
+      penaltyRatePerMinute: 0.5,
       ratePerMinute: 2,
     });
 
-    return { totalCost };
+    return { basicCost, extraTimeUsedMinutes, penaltyCost, totalCost };
   }
 
   private async createReservation(user: User, createReservationDto: CreateReservationDto) {
@@ -107,18 +106,19 @@ export class ParkingService {
     return reservation;
   }
 
-  async update(id: string, unoccupyReservationDto: UnoccupyReservationDto) {
-    await this.findOne(id);
+  async unoccupy(id: string, unoccupyReservationDto: UnoccupyReservationDto) {
+    const { reservation } = await this.findOne(id);
 
-    const { actualExitTime, slotCode } = unoccupyReservationDto;
+    const { actualExitTime, slotCode, isPaid } = unoccupyReservationDto;
 
     await this.parkingSlotService.update({ slot_code: slotCode }, { IsReserved: false });
 
-    // TODO: create total cost based in entry,exit times and penalty
-    await this.reservationRepository.update(id, {
+    await this.reservationRepository.update(reservation.id, {
       actual_exit_time: actualExitTime,
-      is_paid: true,
+      is_paid: isPaid,
     });
+
+    return await this.findOne(id);
   }
 
   private calculateCost(options: {
@@ -143,18 +143,14 @@ export class ParkingService {
 
     if (timeUsedMinutes === durationInMinutes || timeUsedMinutes < durationInMinutes) {
       totalCost = basicCost;
-      return totalCost;
+      return { basicCost, totalCost, penaltyCost: 0, extraTimeUsedMinutes: 0 };
     }
 
     const extraTimeUsedMinutes = timeUsedMinutes - durationInMinutes;
     const totalPenaltyCost = extraTimeUsedMinutes * penaltyRatePerMinute;
 
-    totalCost = Number(basicCost) + totalPenaltyCost;
+    totalCost = +(Number(basicCost) + totalPenaltyCost).toFixed(2);
 
-    return totalCost;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} parking`;
+    return { basicCost, totalCost, penaltyCost: totalPenaltyCost, extraTimeUsedMinutes };
   }
 }

@@ -1,7 +1,6 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Query } from '@nestjs/common';
 import { ParkingService } from './parking.service';
 import { CreateReservationDto } from './dto/create-reservation.dto';
-import { UpdateParkingDto } from './dto/update-parking.dto';
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import { User } from '../auth/entities/user.entity';
 import { Auth } from '../auth/decorators/auth.decorator';
@@ -33,17 +32,14 @@ export class ParkingController {
   }
 
   @Get(':id')
+  @Auth(ValidRoles.admin)
   findOne(@Param('id') id: string) {
     return this.parkingService.findOne(id);
   }
 
   @Patch('/unoccupy/:id')
-  update(@Param('id') id: string, @Body() unoccupyReservationDto: UnoccupyReservationDto) {
-    return this.parkingService.update(id, unoccupyReservationDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.parkingService.remove(+id);
+  @Auth(ValidRoles.customer, ValidRoles.admin)
+  unoccupy(@Param('id') id: string, @Body() unoccupyReservationDto: UnoccupyReservationDto) {
+    return this.parkingService.unoccupy(id, unoccupyReservationDto);
   }
 }
