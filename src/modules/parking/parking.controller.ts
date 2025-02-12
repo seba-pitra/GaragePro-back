@@ -1,10 +1,10 @@
 import { Controller, Get, Post, Body, Patch, Param, Query } from '@nestjs/common';
 import { ParkingService } from './parking.service';
 import { CreateReservationDto } from './dto/create-reservation.dto';
-import { GetUser } from '../auth/decorators/get-user.decorator';
-import { User } from '../auth/entities/user.entity';
-import { Auth } from '../auth/decorators/auth.decorator';
-import { ValidRoles } from '../auth/interfaces/valid-roles.interface';
+import { GetUser } from '@/modules/auth/decorators/get-user.decorator';
+import { User } from '@/modules/auth/entities/user.entity';
+import { Auth } from '@/modules/auth/decorators/auth.decorator';
+import { ValidRoles } from '@/modules/auth/interfaces/valid-roles.interface';
 import { PaginationDto } from '@/common/dtos/pagination.dto';
 import { UnoccupyReservationDto } from './dto/unoccupy-reservation.dto';
 import { CreateTotalCostDto } from './dto/create-total-cost.dto';
@@ -15,8 +15,8 @@ export class ParkingController {
 
   @Post('/reserve')
   @Auth(ValidRoles.customer, ValidRoles.admin)
-  create(@GetUser() user: User, @Body() createReservationDto: CreateReservationDto) {
-    return this.parkingService.create(user, createReservationDto);
+  reserve(@GetUser() user: User, @Body() createReservationDto: CreateReservationDto) {
+    return this.parkingService.reserve(user, createReservationDto);
   }
 
   @Post('/create-total-cost/:id')

@@ -13,9 +13,13 @@ export class ParkingSlotsService {
   ) {}
 
   async create(createParkingSlotDto: CreateParkingSlotDto) {
-    const { slotCode } = createParkingSlotDto;
+    const { slotCode, IsReserved } = createParkingSlotDto;
 
-    const newSlot = this.parkingSlotRepository.create({ slot_code: slotCode });
+    const data = { slot_code: slotCode, is_reserved: false };
+
+    if (IsReserved) data.is_reserved = IsReserved;
+
+    const newSlot = this.parkingSlotRepository.create(data);
     await this.parkingSlotRepository.save(newSlot);
 
     return newSlot;
@@ -28,6 +32,7 @@ export class ParkingSlotsService {
   async findOneBySlotCode(slotCode: string) {
     const slot = await this.parkingSlotRepository.findOneBy({ slot_code: slotCode });
 
+    console.log({ slot });
     if (!slot) throw new NotFoundException('Parking slot not found');
 
     return slot;

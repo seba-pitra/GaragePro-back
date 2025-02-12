@@ -10,19 +10,9 @@ export class CreateReservationDto {
   @MaxLength(100)
   actualEntryTime: string;
 
-  @IsOptional()
-  @IsString()
-  @MaxLength(100)
-  actualExitTime: string;
-
   @Type(() => Number)
   @IsNumber({ allowNaN: false, maxDecimalPlaces: 2 })
   basicCost: number;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber({ allowNaN: false, maxDecimalPlaces: 2 })
-  penalty: number;
 
   @IsString()
   @MaxLength(100)

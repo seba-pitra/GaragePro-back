@@ -23,7 +23,7 @@ export class ParkingService {
     private readonly parkingSlotService: ParkingSlotsService,
   ) {}
 
-  async create(user: User, createReservationDto: CreateReservationDto) {
+  async reserve(user: User, createReservationDto: CreateReservationDto) {
     const { slotCode } = createReservationDto;
 
     const parkingSlot = await this.parkingSlotService.findOneBySlotCode(slotCode);
