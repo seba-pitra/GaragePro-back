@@ -10,6 +10,7 @@ import { User } from '../auth/entities/user.entity';
 import { ParkingSlotsService } from '../parking-slots/parking-slots.service';
 import { PaginationDto } from '@/common/dtos/pagination.dto';
 import { UnoccupyReservationDto } from './dto/unoccupy-reservation.dto';
+import { CreateTotalCostDto } from './dto/create-total-cost.dto';
 
 @Injectable()
 export class ParkingService {
@@ -44,6 +45,22 @@ export class ParkingService {
     const newReservation = await this.reservationSlotRepository.save(reservationSlot);
 
     return newReservation;
+  }
+
+  async createTotalCost(id: string, createTotalCostDto: CreateTotalCostDto) {
+    const { actualExitTime } = createTotalCostDto;
+    const { reservation } = await this.findOne(id);
+
+    const totalCost = this.calculateCost({
+      actualEntryDate: reservation.actual_entry_time,
+      actualExitDate: new Date(actualExitTime),
+      basicCost: +reservation.basic_cost,
+      durationInMinutes: reservation.duration_in_minutes,
+      penaltyRatePerMinute: 2,
+      ratePerMinute: 2,
+    });
+
+    return { totalCost };
   }
 
   private async createReservation(user: User, createReservationDto: CreateReservationDto) {
@@ -102,6 +119,39 @@ export class ParkingService {
       actual_exit_time: actualExitTime,
       is_paid: true,
     });
+  }
+
+  private calculateCost(options: {
+    actualEntryDate: Date;
+    actualExitDate: Date;
+    basicCost: number;
+    durationInMinutes: number;
+    ratePerMinute: number;
+    penaltyRatePerMinute: number;
+  }) {
+    const { actualEntryDate, actualExitDate, basicCost, durationInMinutes, penaltyRatePerMinute } =
+      options;
+
+    let totalCost: number = 0;
+
+    if (isNaN(actualEntryDate.getTime()) || isNaN(actualExitDate.getTime())) {
+      throw new BadRequestException('Invalid date format');
+    }
+
+    const timeUsedMs = actualExitDate.getTime() - actualEntryDate.getTime();
+    const timeUsedMinutes = Math.floor(timeUsedMs / (1000 * 60));
+
+    if (timeUsedMinutes === durationInMinutes || timeUsedMinutes < durationInMinutes) {
+      totalCost = basicCost;
+      return totalCost;
+    }
+
+    const extraTimeUsedMinutes = timeUsedMinutes - durationInMinutes;
+    const totalPenaltyCost = extraTimeUsedMinutes * penaltyRatePerMinute;
+
+    totalCost = Number(basicCost) + totalPenaltyCost;
+
+    return totalCost;
   }
 
   remove(id: number) {

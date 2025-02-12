@@ -8,6 +8,7 @@ import { Auth } from '../auth/decorators/auth.decorator';
 import { ValidRoles } from '../auth/interfaces/valid-roles.interface';
 import { PaginationDto } from '@/common/dtos/pagination.dto';
 import { UnoccupyReservationDto } from './dto/unoccupy-reservation.dto';
+import { CreateTotalCostDto } from './dto/create-total-cost.dto';
 
 @Controller('parking')
 export class ParkingController {
@@ -17,6 +18,12 @@ export class ParkingController {
   @Auth(ValidRoles.customer, ValidRoles.admin)
   create(@GetUser() user: User, @Body() createReservationDto: CreateReservationDto) {
     return this.parkingService.create(user, createReservationDto);
+  }
+
+  @Post('/create-total-cost/:id')
+  @Auth(ValidRoles.employee, ValidRoles.admin)
+  createTotalCost(@Param('id') id: string, @Body() createTotalCostDto: CreateTotalCostDto) {
+    return this.parkingService.createTotalCost(id, createTotalCostDto);
   }
 
   @Get()
