@@ -32,7 +32,6 @@ export class ParkingSlotsService {
   async findOneBySlotCode(slotCode: string) {
     const slot = await this.parkingSlotRepository.findOneBy({ slot_code: slotCode });
 
-    console.log({ slot });
     if (!slot) throw new NotFoundException('Parking slot not found');
 
     return slot;

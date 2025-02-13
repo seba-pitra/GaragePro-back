@@ -1,10 +1,10 @@
+import { DataSource } from 'typeorm';
 import { User } from '@/modules/auth/entities/user.entity';
 import { ParkingSlot } from '@/modules/parking-slots/entities/parking-slot.entity';
-import { CreateReservationDto } from '@/modules/parking/dto/create-reservation.dto';
+import { CreateParkingSlotDto } from '@/modules/parking-slots/dto/create-parking-slot.dto';
 import { ReservationSlot } from '@/modules/parking/entities/reservation-slot.entity';
 import { Reservation } from '@/modules/parking/entities/reservation.entity';
 import { Vehicle } from '@/modules/vehicles/entities/vehicle.entity';
-import { DataSource } from 'typeorm';
 
 export const createVehiclesData = async (datasource: DataSource) => {
   const result = await datasource
@@ -64,12 +64,22 @@ export const createUserData = async (datasource: DataSource) => {
   return user;
 };
 
-export const createParkingSlotData = async (datasource: DataSource) => {
+export const createParkingSlotData = async (
+  datasource: DataSource,
+  createParkingSlotDto?: CreateParkingSlotDto,
+) => {
+  const data = { slot_code: 'A1', is_reserved: true };
+
+  if (createParkingSlotDto) {
+    data.is_reserved = createParkingSlotDto.IsReserved;
+    data.slot_code = createParkingSlotDto.slotCode;
+  }
+
   const result = await datasource
     .createQueryBuilder()
     .insert()
     .into(ParkingSlot)
-    .values({ slot_code: 'A1', is_reserved: true })
+    .values(data)
     .returning('*')
     .execute();
 
