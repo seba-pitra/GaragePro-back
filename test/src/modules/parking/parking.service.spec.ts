@@ -17,6 +17,7 @@ import { CreateReservationDto } from '@/modules/parking/dto/create-reservation.d
 import { CreateParkingSlotDto } from '@/modules/parking-slots/dto/create-parking-slot.dto';
 import { CreateTotalCostDto } from '@/modules/parking/dto/create-total-cost.dto';
 import { UnoccupyReservationDto } from '@/modules/parking/dto/unoccupy-reservation.dto';
+import { Vehicle } from '@/modules/vehicles/entities/vehicle.entity';
 
 describe('Parking Service', () => {
   let parkingService: ParkingService;
@@ -45,11 +46,11 @@ describe('Parking Service', () => {
             username: configService.get('DB_USER'),
             password: configService.get('DB_PASSWORD'),
             database: configService.get('DB_NAME'),
-            entities: [Reservation, ReservationSlot, ParkingSlot, User],
+            entities: [Reservation, ReservationSlot, ParkingSlot, User, Vehicle],
             synchronize: true,
           }),
         }),
-        TypeOrmModule.forFeature([Reservation, ReservationSlot, ParkingSlot, User]),
+        TypeOrmModule.forFeature([Reservation, ReservationSlot, ParkingSlot, User, Vehicle]),
         ParkingSlotsModule,
       ],
       providers: [ParkingService],
@@ -57,6 +58,11 @@ describe('Parking Service', () => {
 
     parkingService = parkingModule.get<ParkingService>(ParkingService);
     parkingSlotService = parkingModule.get<ParkingSlotsService>(ParkingSlotsService);
+  });
+
+  beforeEach(async () => {
+    await dataSource.dropDatabase();
+    await dataSource.synchronize(true);
   });
 
   it('should be defined', () => {
@@ -72,7 +78,15 @@ describe('Parking Service', () => {
   });
 
   it('reserve should create a reservation', async () => {
-    const newUser = await createUserData(dataSource);
+    const createUserDto = {
+      email: 'test_reserve@gmail.com',
+      firstName: 'test_user',
+      lastName: 'test_lastnma',
+      password: 'testPassword1',
+      phone: '1111611111',
+    };
+
+    const newUser = await createUserData(dataSource, createUserDto);
 
     const createParkingSlotDto: CreateParkingSlotDto = { slotCode: 'A1', IsReserved: false };
     const parkingSlot = await parkingSlotService.create(createParkingSlotDto);
@@ -113,7 +127,15 @@ describe('Parking Service', () => {
 
   it('reserve should throw an error if parking slot is already reserved', async () => {
     try {
-      const newUser = await createUserData(dataSource);
+      const createUserDto = {
+        email: 'test_reserve@gmail.com',
+        firstName: 'test_user',
+        lastName: 'test_lastnma',
+        password: 'testPassword1',
+        phone: '1111611111',
+      };
+
+      const newUser = await createUserData(dataSource, createUserDto);
       const createParkingSlotDto: CreateParkingSlotDto = { slotCode: 'A1', IsReserved: true };
       const parkingSlot = await parkingSlotService.create(createParkingSlotDto);
 
@@ -294,11 +316,6 @@ describe('Parking Service', () => {
       expect(error).toBeInstanceOf(NotFoundException);
       expect(error.message).toBe('Reservation not found');
     }
-  });
-
-  afterEach(async () => {
-    await dataSource.dropDatabase();
-    await dataSource.synchronize();
   });
 
   afterAll(async () => {
