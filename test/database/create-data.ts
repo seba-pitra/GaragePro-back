@@ -5,23 +5,10 @@ import { CreateParkingSlotDto } from '@/modules/parking-slots/dto/create-parking
 import { ReservationSlot } from '@/modules/parking/entities/reservation-slot.entity';
 import { Reservation } from '@/modules/parking/entities/reservation.entity';
 import { Vehicle } from '@/modules/vehicles/entities/vehicle.entity';
+import { CreateUserDto } from '../../src/modules/auth/dto/create-user.dto';
 
 export const createVehiclesData = async (datasource: DataSource) => {
-  const result = await datasource
-    .createQueryBuilder()
-    .insert()
-    .into(User)
-    .values({
-      firstName: 'test_user',
-      lastName: 'test_lastnma',
-      email: 'testMail01@gmail.com',
-      password: 'testPassword1',
-      phone: '1111611111',
-    })
-    .returning('*')
-    .execute();
-
-  const user = result.raw[0];
+  const user = await createUserData(datasource);
 
   const arrayVehicles = [];
   for (let i = 0; i < 5; i++) {
@@ -44,18 +31,28 @@ export const createVehiclesData = async (datasource: DataSource) => {
   return { vehicles, user };
 };
 
-export const createUserData = async (datasource: DataSource) => {
+export const createUserData = async (datasource: DataSource, createUserDto?: CreateUserDto) => {
+  const data = {
+    email: 'test_user',
+    firstName: 'test_user',
+    lastName: 'test_lastnma',
+    password: 'testPassword1',
+    phone: '1111611111',
+  };
+
+  if (createUserDto) {
+    data.email = createUserDto.email;
+    data.firstName = createUserDto.firstName;
+    data.lastName = createUserDto.lastName;
+    data.password = createUserDto.password;
+    data.phone = createUserDto.phone;
+  }
+
   const result = await datasource
     .createQueryBuilder()
     .insert()
     .into(User)
-    .values({
-      firstName: 'test_user',
-      lastName: 'test_lastnma',
-      email: 'testMail01@gmail.com',
-      password: 'testPassword1',
-      phone: '1111611111',
-    })
+    .values(data)
     .returning('*')
     .execute();
 

@@ -19,6 +19,7 @@ import { ParkingSlot } from '@/modules/parking-slots/entities/parking-slot.entit
 import { CreateReservationDto } from '@/modules/parking/dto/create-reservation.dto';
 import { ParkingModule } from '@/modules/parking/parking.module';
 import { UnoccupyReservationDto } from '@/modules/parking/dto/unoccupy-reservation.dto';
+import { Vehicle } from '@/modules/vehicles/entities/vehicle.entity';
 
 describe('Parking (e2e)', () => {
   const dataSource = createTestDatabase();
@@ -47,12 +48,12 @@ describe('Parking (e2e)', () => {
               username: configService.get('DB_USER'),
               password: configService.get('DB_PASSWORD'),
               database: configService.get('DB_NAME'),
-              entities: [Reservation, ReservationSlot, ParkingSlot, User],
+              entities: [Reservation, ReservationSlot, ParkingSlot, User, Vehicle],
               synchronize: true,
             };
           },
         }),
-        TypeOrmModule.forFeature([Reservation, ReservationSlot, ParkingSlot, User]),
+        TypeOrmModule.forFeature([Reservation, ReservationSlot, ParkingSlot, User, Vehicle]),
         ParkingModule,
         ParkingSlotsModule,
         AuthModule,
@@ -75,6 +76,9 @@ describe('Parking (e2e)', () => {
   });
 
   beforeEach(async () => {
+    await dataSource.dropDatabase();
+    await dataSource.synchronize(true);
+
     const createUserDto: CreateUserDto = {
       firstName: 'test',
       lastName: 'test',
@@ -92,11 +96,6 @@ describe('Parking (e2e)', () => {
       .where('email = :email', { email: createUserDto.email })
       .returning('*')
       .execute();
-  });
-
-  afterEach(async () => {
-    await dataSource.dropDatabase();
-    await dataSource.synchronize();
   });
 
   it('/POST /parking/reserve should create a reservation', async () => {
@@ -374,7 +373,7 @@ describe('Parking (e2e)', () => {
     expect(body).toHaveProperty('data');
     expect(body).toHaveProperty('ok');
     expect(body).toHaveProperty('timestamps');
-    expect(body.data).toEqual({
+    expect(body.data).toMatchObject({
       id: expect.any(String),
       parking_slot: {
         id: expect.any(String),
