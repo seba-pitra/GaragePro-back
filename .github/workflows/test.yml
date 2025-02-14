@@ -1,4 +1,4 @@
-name: UNIT TEST CI WORKFLOW
+name: TEST CI WORKFLOW
 
 on:
   pull_request:
