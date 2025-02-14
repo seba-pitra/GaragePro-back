@@ -12,17 +12,17 @@ jobs:
     container:
       image: node:18.20.3
     services:
-      image: postgres:15
-      env:
-        POSTGRES_USER: test_user
-        POSTGRES_PASSWORD: test_user
-        POSTGRES_DB: garagepro_test
-      ports:
-        - 5432:5432
-      options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: password1
+          POSTGRES_DB: garagepro_test
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
     env:
       NODE_ENV: development
-      DB_USER: test_user
+      DB_USER: postgres
       DB_PASSWORD: testPassword
       DB_NAME: garagepro_test
       DB_PORT: 5433
