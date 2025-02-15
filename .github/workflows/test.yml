@@ -25,7 +25,7 @@ jobs:
       DB_USER: postgres
       DB_PASSWORD: testPassword
       DB_NAME: garagepro_test
-      DB_PORT: 5433
+      DB_PORT: 5432
       DB_HOST: localhost
       CONTAINER_NAME: garagepro_test
       PORT: 3000
