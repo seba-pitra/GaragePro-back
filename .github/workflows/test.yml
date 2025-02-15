@@ -26,7 +26,7 @@ jobs:
       DB_PASSWORD: testPassword
       DB_NAME: garagepro_test
       DB_PORT: 5433
-      DB_HOST: localhost
+      DB_HOST: postgres
       CONTAINER_NAME: garagepro_test
       PORT: 3000
       JWT_TOKEN_SECRET: secret_test
