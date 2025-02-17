@@ -10,6 +10,9 @@ export class ParkingSlot {
   slot_code: string;
 
   @Column('boolean', { nullable: false, default: false })
+  is_pre_reserved: boolean;
+
+  @Column('boolean', { nullable: false, default: false })
   is_reserved: boolean;
 
   @OneToMany(() => ReservationSlot, (reservationSlot) => reservationSlot.parking_slot)
