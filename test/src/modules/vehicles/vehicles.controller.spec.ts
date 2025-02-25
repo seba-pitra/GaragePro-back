@@ -1,10 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ExecutionContext } from '@nestjs/common';
+
 import { VehiclesController } from '@/modules/vehicles/vehicles.controller';
 import { VehiclesService } from '@/modules/vehicles/vehicles.service';
 import { CreateVehicleDto } from '@/modules/vehicles/dto/create-vehicle.dto';
 import { PaginationDto } from '@/common/dtos/pagination.dto';
 import { UpdateVehicleDto } from '@/modules/vehicles/dto/update-vehicle.dto';
-import { ExecutionContext } from '@nestjs/common';
 
 jest.mock('@nestjs/passport', () => ({
   ...jest.requireActual('@nestjs/passport'),
@@ -16,80 +17,13 @@ jest.mock('@nestjs/passport', () => ({
 describe('Vehicle Controller', () => {
   let controller: VehiclesController;
 
-  const dataVehicle = [
-    {
-      id: '63071878-7f3f-4694-9f0f-d8bac4163f4b',
-      plate_number: 'AF 638 FF',
-      model: 'Toyota Hilux',
-      color: 'Gray',
-      is_active: true,
-      created_at: '2025-02-04T19:06:25.175Z',
-      user_id: '123bae1e-596f-43fd-9909-6a65ed3f5298',
-    },
-    {
-      id: '63071878-7f3f-4694-9f0f-d8bac4163f4b',
-      plate_number: 'AF 638 FF',
-      model: 'Toyota Corolla',
-      color: 'Black',
-      is_active: false,
-      created_at: '2025-02-04T19:06:25.175Z',
-      user_id: '123bae1e-596f-43fd-9909-6a65ed3f5298',
-    },
-  ];
-
   const mockVehiclesService = {
-    create: jest.fn((createVehicleDto: CreateVehicleDto) => ({
-      vehicle: {
-        plate_number: createVehicleDto.plateNumber,
-        model: createVehicleDto.model,
-        color: createVehicleDto.color,
-        is_active: true,
-      },
-    })),
-    findAll: jest.fn((paginationDto: PaginationDto) => {
-      const { offset, limit } = paginationDto;
-      for (let i = 0; i < 12; i++) {
-        dataVehicle.push({
-          id: '63071878-7f3f-4694-9f0f-d8bac4163f4c',
-          plate_number: `AG A${i} FF`,
-          model: 'Toyota Corolla',
-          color: 'Red',
-          is_active: i % 2 === 0 ? true : false,
-          created_at: '2025-02-04T19:06:25.175Z',
-          user_id: '123bae1e-596f-43fd-9909-6a65ed3f5298',
-        });
-      }
-      return { vehicles: dataVehicle.slice(offset, limit) };
-    }),
-    findByUserId: jest.fn((userId: string, paginationDto: PaginationDto) => {
-      const { offset, limit } = paginationDto;
-      for (let i = 0; i < 12; i++) {
-        dataVehicle.push({
-          id: '63071878-7f3f-4694-9f0f-d8bac4163f4c',
-          plate_number: `AG A${i} FF`,
-          model: 'Toyota Corolla',
-          color: 'Red',
-          is_active: i % 2 === 0 ? true : false,
-          created_at: '2025-02-04T19:06:25.175Z',
-          user_id: '123bae1e-596f-43fd-9909-6a65ed3f5298',
-        });
-      }
-      const vehicles = dataVehicle.slice(offset, limit);
-      return { vehicles: vehicles.filter((veh) => veh.user_id === userId) };
-    }),
-    findOne: jest.fn((id: string) => {
-      return { vehicle: dataVehicle.find((veh) => veh.id === id) };
-    }),
-    update: jest.fn((id: string, updateVehicleDto: UpdateVehicleDto) => {
-      const vehicle = dataVehicle.find((veh) => veh.id === id);
-      for (const key of Object.keys(updateVehicleDto)) {
-        vehicle[key] = updateVehicleDto[key];
-      }
-      return { vehicle };
-    }),
-    remove: jest.fn((id: string) => {
-      return { vehicle: dataVehicle.find((veh) => veh.id === id) };
-    }),
+    create: jest.fn((createVehicleDto: CreateVehicleDto) => true),
+    findAll: jest.fn((paginationDto: PaginationDto) => true),
+    findByUserId: jest.fn((userId: string, paginationDto: PaginationDto) => true),
+    findOne: jest.fn((id: string) => true),
+    update: jest.fn((id: string, updateVehicleDto: UpdateVehicleDto) => true),
+    remove: jest.fn((id: string) => true),
   };
 
   beforeEach(async () => {
@@ -119,72 +53,63 @@ describe('Vehicle Controller', () => {
     expect(controller.remove).toBeDefined();
   });
 
-  it('create method should return a new vehicle', async () => {
+  it('create method should call service', async () => {
     const createVehicleDto: CreateVehicleDto = {
       color: 'White',
       model: 'Peugeot 2008',
       plateNumber: 'AD 452 DFG',
       userId: '123bae1e-596f-43fd-9909-6a65ed3f5298',
     };
-    const newVehicle = await controller.create(createVehicleDto);
+    await controller.create(createVehicleDto);
 
-    expect(newVehicle).toEqual({
-      vehicle: {
-        color: 'White',
-        is_active: true,
-        model: 'Peugeot 2008',
-        plate_number: 'AD 452 DFG',
-      },
-    });
+    expect(mockVehiclesService.create).toHaveBeenCalledTimes(1);
+    expect(mockVehiclesService.create).toHaveBeenCalledWith(createVehicleDto);
   });
 
-  it('findAll method should return an array of vehicles', async () => {
+  it('findAll method should call service', async () => {
     const paginationDto: PaginationDto = { limit: 2, offset: 0 };
 
-    const vehicles = await controller.findAll(paginationDto);
+    await controller.findAll(paginationDto);
 
-    expect(vehicles).toEqual({
-      vehicles: [dataVehicle[0], dataVehicle[1]],
-    });
+    expect(mockVehiclesService.findAll).toHaveBeenCalledTimes(1);
+    expect(mockVehiclesService.findAll).toHaveBeenCalledWith(paginationDto);
   });
 
-  it('findOne method should return a vehicle', async () => {
-    const vehicle = await controller.findOne(dataVehicle[0].id);
+  it('findOne method should call service', async () => {
+    const id = 'abc-123';
 
-    expect(vehicle).toEqual({
-      vehicle: dataVehicle[0],
-    });
+    await controller.findOne(id);
+
+    expect(mockVehiclesService.findOne).toHaveBeenCalledTimes(1);
+    expect(mockVehiclesService.findOne).toHaveBeenCalledWith(id);
   });
 
-  it('findByUserId method should return a vehicle', async () => {
+  it('findByUserId method should call service', async () => {
     const paginationDto: PaginationDto = { limit: 3, offset: 1 };
     const userId = '123bae1e-596f-43fd-9909-6a65ed3f5298';
 
-    const vehicles = await controller.findByUserId(userId, paginationDto);
+    await controller.findByUserId(userId, paginationDto);
 
-    expect(vehicles).toEqual({
-      vehicles: [dataVehicle[1], dataVehicle[2]],
-    });
+    expect(mockVehiclesService.findByUserId).toHaveBeenCalledTimes(1);
+    expect(mockVehiclesService.findByUserId).toHaveBeenCalledWith(userId, paginationDto);
   });
 
-  it('update method should update a vehicle', async () => {
+  it('update method should call service', async () => {
     const vehicleId = '63071878-7f3f-4694-9f0f-d8bac4163f4b';
     const updateVehicleDto: UpdateVehicleDto = { model: 'Toyota Etios' };
 
-    const updatedVehicle = await controller.update(vehicleId, updateVehicleDto);
+    await controller.update(vehicleId, updateVehicleDto);
 
-    expect(updatedVehicle).toEqual({
-      vehicle: { ...updateVehicleDto, ...dataVehicle[0] },
-    });
+    expect(mockVehiclesService.update).toHaveBeenCalledTimes(1);
+    expect(mockVehiclesService.update).toHaveBeenCalledWith(vehicleId, updateVehicleDto);
   });
 
-  it('remove method should return a vehicle', async () => {
+  it('remove method should call service', async () => {
     const vehicleId = '63071878-7f3f-4694-9f0f-d8bac4163f4b';
 
-    const removedVehicle = await controller.remove(vehicleId);
+    await controller.remove(vehicleId);
 
-    expect(removedVehicle).toEqual({
-      vehicle: { ...dataVehicle[0] },
-    });
+    expect(mockVehiclesService.remove).toHaveBeenCalledTimes(1);
+    expect(mockVehiclesService.remove).toHaveBeenCalledWith(vehicleId);
   });
 });

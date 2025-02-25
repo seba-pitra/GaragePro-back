@@ -16,6 +16,9 @@ import { UpdateVehicleDto } from '@/modules/vehicles/dto/update-vehicle.dto';
 import { AuthModule } from '@/modules/auth/auth.module';
 import { CreateUserDto } from '@/modules/auth/dto/create-user.dto';
 import { ValidRoles } from '@/modules/auth/interfaces/valid-roles.interface';
+import { Reservation } from '@/modules/parking/entities/reservation.entity';
+import { ReservationSlot } from '@/modules/parking/entities/reservation-slot.entity';
+import { ParkingSlot } from '@/modules/parking-slots/entities/parking-slot.entity';
 
 describe('Vehicles (e2e)', () => {
   const dataSource = createTestDatabase();
@@ -44,12 +47,12 @@ describe('Vehicles (e2e)', () => {
               username: configService.get('DB_USER'),
               password: configService.get('DB_PASSWORD'),
               database: configService.get('DB_NAME'),
-              entities: [User, Vehicle],
+              entities: [Reservation, ReservationSlot, ParkingSlot, User, Vehicle],
               synchronize: true,
             };
           },
         }),
-        TypeOrmModule.forFeature([User, Vehicle]),
+        TypeOrmModule.forFeature([Reservation, ReservationSlot, ParkingSlot, User, Vehicle]),
         AuthModule,
         VehiclesModule,
       ],
@@ -71,6 +74,9 @@ describe('Vehicles (e2e)', () => {
   });
 
   beforeEach(async () => {
+    await dataSource.dropDatabase();
+    await dataSource.synchronize(true);
+
     const createUserDto: CreateUserDto = {
       firstName: 'test',
       lastName: 'test',
@@ -88,11 +94,6 @@ describe('Vehicles (e2e)', () => {
       .where('email = :email', { email: createUserDto.email })
       .returning('*')
       .execute();
-  });
-
-  afterEach(async () => {
-    await dataSource.dropDatabase();
-    await dataSource.synchronize();
   });
 
   it('/POST /vehicles should create a vehicle', async () => {

@@ -5,11 +5,14 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { envConfiguration } from './config/env.config';
 import { AuthModule } from './modules/auth/auth.module';
 import { joiValidationSchema } from './config/joi.validation';
-import { ReservationsModule } from './modules/reservations/reservations.module';
-import { Reservation } from './modules/reservations/entities/reservation.entity';
 import { User } from './modules/auth/entities/user.entity';
 import { VehiclesModule } from './modules/vehicles/vehicles.module';
 import { Vehicle } from './modules/vehicles/entities/vehicle.entity';
+import { Reservation } from './modules/parking/entities/reservation.entity';
+import { ReservationSlot } from './modules/parking/entities/reservation-slot.entity';
+import { ParkingModule } from './modules/parking/parking.module';
+import { ParkingSlotsModule } from './modules/parking-slots/parking-slots.module';
+import { ParkingSlot } from './modules/parking-slots/entities/parking-slot.entity';
 
 @Module({
   imports: [
@@ -29,7 +32,7 @@ import { Vehicle } from './modules/vehicles/entities/vehicle.entity';
           username: configService.get('DB_USER'),
           password: configService.get('DB_PASSWORD'),
           database: configService.get('DB_NAME'),
-          entities: [User, Reservation, Vehicle],
+          entities: [User, Reservation, Vehicle, Reservation, ReservationSlot, ParkingSlot],
           synchronize: true,
         };
       },
@@ -37,9 +40,11 @@ import { Vehicle } from './modules/vehicles/entities/vehicle.entity';
 
     AuthModule,
 
-    ReservationsModule,
-
     VehiclesModule,
+
+    ParkingModule,
+
+    ParkingSlotsModule,
   ],
 })
 export class AppModule {}

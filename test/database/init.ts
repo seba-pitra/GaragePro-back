@@ -2,6 +2,9 @@ import { config } from 'dotenv';
 import { DataSource } from 'typeorm';
 import { User } from '@/modules/auth/entities/user.entity';
 import { Vehicle } from '@/modules/vehicles/entities/vehicle.entity';
+import { Reservation } from '@/modules/parking/entities/reservation.entity';
+import { ReservationSlot } from '@/modules/parking/entities/reservation-slot.entity';
+import { ParkingSlot } from '@/modules/parking-slots/entities/parking-slot.entity';
 
 config({ path: '.env.test' });
 
@@ -13,6 +16,6 @@ export const createTestDatabase = () =>
     username: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
-    entities: [Vehicle, User],
+    entities: [Vehicle, User, Reservation, ReservationSlot, ParkingSlot],
     synchronize: true,
   });

@@ -15,18 +15,18 @@ jobs:
       postgres:
         image: postgres:15
         env:
-          POSTGRES_PASSWORD: password1
+          POSTGRES_PASSWORD: testPassword
           POSTGRES_DB: garagepro_test
         ports:
           - 5432:5432
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
     env:
-      NODE_ENV: development
+      NODE_ENV: test
       DB_USER: postgres
       DB_PASSWORD: testPassword
       DB_NAME: garagepro_test
-      DB_PORT: 5433
-      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_HOST: postgres
       CONTAINER_NAME: garagepro_test
       PORT: 3000
       JWT_TOKEN_SECRET: secret_test

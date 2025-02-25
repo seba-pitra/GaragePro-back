@@ -2,7 +2,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 
 import { User } from '@/modules/auth/entities/user.entity';
 import { Vehicle } from '@/modules/vehicles/entities/vehicle.entity';
@@ -12,6 +12,9 @@ import { PaginationDto } from '@/common/dtos/pagination.dto';
 import { UpdateVehicleDto } from '@/modules/vehicles/dto/update-vehicle.dto';
 import { createTestDatabase } from '../../../database/init';
 import { createVehiclesData } from '../../../database/create-data';
+import { ParkingSlot } from '@/modules/parking-slots/entities/parking-slot.entity';
+import { ReservationSlot } from '@/modules/parking/entities/reservation-slot.entity';
+import { Reservation } from '@/modules/parking/entities/reservation.entity';
 
 describe('Vehicle Service', () => {
   let service: VehiclesService;
@@ -41,7 +44,7 @@ describe('Vehicle Service', () => {
             username: configService.get('DB_USER'),
             password: configService.get('DB_PASSWORD'),
             database: configService.get('DB_NAME'),
-            entities: [Vehicle, User],
+            entities: [Reservation, ReservationSlot, ParkingSlot, User, Vehicle],
             synchronize: true,
           }),
         }),
@@ -53,6 +56,11 @@ describe('Vehicle Service', () => {
     service = vehicleModule.get<VehiclesService>(VehiclesService);
     vehiclesRepository = vehicleModule.get<Repository<Vehicle>>(getRepositoryToken(Vehicle));
     userRepository = vehicleModule.get<Repository<User>>(getRepositoryToken(User));
+  });
+
+  beforeEach(async () => {
+    await dataSource.dropDatabase();
+    await dataSource.synchronize(true);
   });
 
   it('should be defined', () => {
@@ -124,7 +132,7 @@ describe('Vehicle Service', () => {
       await service.create(createVehicleDto);
       expect(true).toBeFalsy();
     } catch (error) {
-      expect(error).toBeInstanceOf(NotFoundException);
+      expect(error).toBeInstanceOf(BadRequestException);
       expect(error.message).toBe(`Vehicle already exists with plate number: ${plateNumber}`);
     }
   });
@@ -272,11 +280,6 @@ describe('Vehicle Service', () => {
       expect(error).toBeInstanceOf(NotFoundException);
       expect(error.message).toBe('Vehicle not found');
     }
-  });
-
-  afterEach(async () => {
-    await dataSource.dropDatabase();
-    await dataSource.synchronize();
   });
 
   afterAll(async () => {
