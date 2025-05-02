@@ -4,7 +4,6 @@ import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 
-import { User } from '@/modules/auth/entities/user.entity';
 import { Vehicle } from '@/modules/vehicles/entities/vehicle.entity';
 import { VehiclesService } from '@/modules/vehicles/vehicles.service';
 import { CreateVehicleDto } from '@/modules/vehicles/dto/create-vehicle.dto';
@@ -15,6 +14,7 @@ import { createVehiclesData } from '../../../database/create-data';
 import { ParkingSlot } from '@/modules/parking-slots/entities/parking-slot.entity';
 import { ReservationSlot } from '@/modules/parking/entities/reservation-slot.entity';
 import { Reservation } from '@/modules/parking/entities/reservation.entity';
+import { User } from '@/modules/users/entities/user.entity';
 
 describe('Vehicle Service', () => {
   let service: VehiclesService;

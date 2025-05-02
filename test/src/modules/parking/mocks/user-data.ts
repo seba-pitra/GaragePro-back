@@ -1,4 +1,4 @@
-import { User } from '@/modules/auth/entities/user.entity';
+import { User } from '@/modules/users/entities/user.entity';
 
 export const user: User = {
   id: '02e712fc-a7da-4017-993f-1321a94753ad',

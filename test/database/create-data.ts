@@ -1,11 +1,11 @@
 import { DataSource } from 'typeorm';
-import { User } from '@/modules/auth/entities/user.entity';
 import { ParkingSlot } from '@/modules/parking-slots/entities/parking-slot.entity';
 import { CreateParkingSlotDto } from '@/modules/parking-slots/dto/create-parking-slot.dto';
 import { ReservationSlot } from '@/modules/parking/entities/reservation-slot.entity';
 import { Reservation } from '@/modules/parking/entities/reservation.entity';
 import { Vehicle } from '@/modules/vehicles/entities/vehicle.entity';
-import { CreateUserDto } from '../../src/modules/auth/dto/create-user.dto';
+import { User } from '@/modules/users/entities/user.entity';
+import { CreateUserDto } from '@/modules/users/dto/create-user.dto';
 
 export const createVehiclesData = async (datasource: DataSource) => {
   const user = await createUserData(datasource);
