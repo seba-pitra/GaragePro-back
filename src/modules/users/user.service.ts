@@ -15,7 +15,7 @@ import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { comparePasswords, encryptPassword } from '@/utils/encrypt';
 
 @Injectable()
-export class AuthService {
+export class UserService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,

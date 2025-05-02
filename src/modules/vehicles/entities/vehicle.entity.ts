@@ -1,5 +1,5 @@
+import { User } from '@/modules/users/entities/user.entity';
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
-import { User } from '@/modules/auth/entities/user.entity';
 
 @Entity('vehicles')
 export class Vehicle {

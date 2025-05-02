@@ -3,8 +3,8 @@ import { PaginationDto } from '@/common/dtos/pagination.dto';
 import { VehiclesService } from './vehicles.service';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
-import { Auth } from '../auth/decorators/auth.decorator';
-import { ValidRoles } from '../auth/interfaces/valid-roles.interface';
+import { Auth } from '../users/decorators/auth.decorator';
+import { ValidRoles } from '../users/interfaces/valid-roles.interface';
 
 @Controller('vehicles')
 export class VehiclesController {

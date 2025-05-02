@@ -6,7 +6,7 @@ import { PaginationDto } from '@/common/dtos/pagination.dto';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
 import { Vehicle } from './entities/vehicle.entity';
-import { User } from '../auth/entities/user.entity';
+import { User } from '../users/entities/user.entity';
 
 @Injectable()
 export class VehiclesService {

@@ -5,7 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { CreateReservationDto } from './dto/create-reservation.dto';
 import { Reservation } from './entities/reservation.entity';
 import { ReservationSlot } from './entities/reservation-slot.entity';
-import { User } from '../auth/entities/user.entity';
+import { User } from '../users/entities/user.entity';
 import { ParkingSlotsService } from '../parking-slots/parking-slots.service';
 import { PaginationDto } from '@/common/dtos/pagination.dto';
 import { UnoccupyReservationDto } from './dto/unoccupy-reservation.dto';
