@@ -13,11 +13,9 @@ export class ParkingSlotsService {
   ) {}
 
   async create(createParkingSlotDto: CreateParkingSlotDto) {
-    const { slotCode, IsReserved } = createParkingSlotDto;
+    const { slotCode } = createParkingSlotDto;
 
-    const data = { slot_code: slotCode, is_reserved: false };
-
-    if (IsReserved) data.is_reserved = IsReserved;
+    const data = { slot_code: slotCode };
 
     const newSlot = this.parkingSlotRepository.create(data);
     await this.parkingSlotRepository.save(newSlot);
@@ -66,14 +64,6 @@ export class ParkingSlotsService {
 
     if (data.slotCode) {
       updateData.slot_code = data.slotCode;
-    }
-
-    if (data.IsReserved !== undefined) {
-      updateData.is_reserved = data.IsReserved;
-    }
-
-    if (data.IsReserved !== undefined) {
-      updateData.is_pre_reserved = data.IsPreReserved;
     }
 
     return updateData;

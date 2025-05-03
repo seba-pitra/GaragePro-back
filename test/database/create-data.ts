@@ -1,11 +1,11 @@
 import { DataSource } from 'typeorm';
-import { User } from '@/modules/auth/entities/user.entity';
 import { ParkingSlot } from '@/modules/parking-slots/entities/parking-slot.entity';
 import { CreateParkingSlotDto } from '@/modules/parking-slots/dto/create-parking-slot.dto';
 import { ReservationSlot } from '@/modules/parking/entities/reservation-slot.entity';
 import { Reservation } from '@/modules/parking/entities/reservation.entity';
 import { Vehicle } from '@/modules/vehicles/entities/vehicle.entity';
-import { CreateUserDto } from '../../src/modules/auth/dto/create-user.dto';
+import { User } from '@/modules/users/entities/user.entity';
+import { CreateUserDto } from '@/modules/users/dto/create-user.dto';
 
 export const createVehiclesData = async (datasource: DataSource) => {
   const user = await createUserData(datasource);
@@ -68,7 +68,6 @@ export const createParkingSlotData = async (
   const data = { slot_code: 'A1', is_reserved: true };
 
   if (createParkingSlotDto) {
-    data.is_reserved = createParkingSlotDto.IsReserved;
     data.slot_code = createParkingSlotDto.slotCode;
   }
 
@@ -96,6 +95,8 @@ export const createReservationData = async (datasource: DataSource) => {
     .values({
       actual_entry_time: new Date().toISOString(),
       basic_cost: 30.33,
+      entry_time: new Date(new Date().getTime() + 10000).toISOString(),
+      exit_time: new Date(new Date().getTime() + 60000).toISOString(),
       duration_in_minutes: 60,
       user,
     })
