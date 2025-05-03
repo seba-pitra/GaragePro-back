@@ -154,7 +154,8 @@ describe('Parking Controller', () => {
   it('reserve should call service method', async () => {
     const createReservationDto: CreateReservationDto = {
       durationInMinutes: 60,
-      actualEntryTime: '2025-02-07T03:39:54.254Z',
+      entryTime: '2025-05-07T02:00:00.000Z',
+      exitTime: '2025-05-07T03:00:00.000Z',
       basicCost: 30.33,
       slotCode: 'A1',
     };

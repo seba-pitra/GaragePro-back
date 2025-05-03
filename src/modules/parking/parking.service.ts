@@ -28,18 +28,11 @@ export class ParkingService {
 
     const parkingSlot = await this.parkingSlotService.findOneBySlotCode(slotCode);
 
-    if (parkingSlot.is_reserved) throw new BadRequestException('Parking Slot was already reserved');
-
-    const updatedSlot = await this.parkingSlotService.update(
-      { slot_code: slotCode },
-      { IsReserved: true },
-    );
-
     const reservation = await this.createReservation(user, createReservationDto);
 
     const reservationSlot = new ReservationSlot();
     reservationSlot.reservation = reservation;
-    reservationSlot.parking_slot = updatedSlot;
+    reservationSlot.parking_slot = parkingSlot;
 
     const newReservation = await this.reservationSlotRepository.save(reservationSlot);
 
@@ -63,15 +56,41 @@ export class ParkingService {
   }
 
   private async createReservation(user: User, createReservationDto: CreateReservationDto) {
-    const { actualEntryTime, basicCost, durationInMinutes } = createReservationDto;
+    const { entryTime, exitTime, basicCost, durationInMinutes } = createReservationDto;
 
+    // 1. Verify that the entry and exit time are valid dates
+    const areValidDates =
+      !entryTime ||
+      !exitTime ||
+      isNaN(new Date(entryTime).getTime()) ||
+      isNaN(new Date(exitTime).getTime());
+
+    if (areValidDates) throw new BadRequestException('Invalid entry or exit time');
+
+    // 2. Verify that the entry and exit time are greater than the current date
+    const currentDate = new Date();
+    const entryDate = new Date(entryTime);
+    const exitDate = new Date(exitTime);
+
+    if (entryDate < currentDate || exitDate < currentDate) {
+      throw new BadRequestException('Entry and exit time must be greater than current date');
+    }
+
+    // 3. Lookup if there is already a reservation in that slot for the selected time
+    await this.verifyIfSlotIsReserved({
+      slotCode: createReservationDto.slotCode,
+      entryTime: entryTime,
+      exitTime: exitTime,
+    });
+
+    // 4. Create the reservation and return it
     const newReservation = this.reservationRepository.create({
-      actual_entry_time: actualEntryTime,
+      entry_time: entryTime,
+      exit_time: exitTime,
       basic_cost: basicCost,
       duration_in_minutes: durationInMinutes,
       user,
     });
-
     await this.reservationRepository.save(newReservation);
 
     return newReservation;
@@ -109,9 +128,7 @@ export class ParkingService {
   async unoccupy(id: string, unoccupyReservationDto: UnoccupyReservationDto) {
     const { reservation } = await this.findOne(id);
 
-    const { actualExitTime, slotCode, isPaid } = unoccupyReservationDto;
-
-    await this.parkingSlotService.update({ slot_code: slotCode }, { IsReserved: false });
+    const { actualExitTime, isPaid } = unoccupyReservationDto;
 
     await this.reservationRepository.update(reservation.id, {
       actual_exit_time: actualExitTime,
@@ -119,6 +136,29 @@ export class ParkingService {
     });
 
     return await this.findOne(id);
+  }
+
+  private async verifyIfSlotIsReserved(options: {
+    slotCode: string;
+    entryTime: string;
+    exitTime: string;
+  }) {
+    const { slotCode, entryTime, exitTime } = options;
+
+    const reservationExists = await this.reservationRepository
+      .createQueryBuilder('reservation')
+      .innerJoin('reservation.reservation_slot', 'reservation_slot')
+      .innerJoin('reservation_slot.parking_slot', 'slot')
+      .where('slot.slot_code = :slotCode', { slotCode })
+      .andWhere('reservation.entry_time < :exitTime', { exitTime: new Date(exitTime) })
+      .andWhere('reservation.exit_time > :entryTime', { entryTime: new Date(entryTime) })
+      .getOne();
+
+    if (reservationExists) {
+      throw new BadRequestException(
+        'There is already a reservation in this slot for the selected time',
+      );
+    }
   }
 
   private calculateCost(options: {
