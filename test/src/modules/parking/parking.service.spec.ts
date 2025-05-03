@@ -88,7 +88,7 @@ describe('Parking Service', () => {
 
     const newUser = await createUserData(dataSource, createUserDto);
 
-    const createParkingSlotDto: CreateParkingSlotDto = { slotCode: 'A1', IsReserved: false };
+    const createParkingSlotDto: CreateParkingSlotDto = { slotCode: 'A1' };
     const parkingSlot = await parkingSlotService.create(createParkingSlotDto);
 
     const createReservationDto: CreateReservationDto = {
@@ -138,7 +138,7 @@ describe('Parking Service', () => {
       };
 
       const newUser = await createUserData(dataSource, createUserDto);
-      const createParkingSlotDto: CreateParkingSlotDto = { slotCode: 'A1', IsReserved: true };
+      const createParkingSlotDto: CreateParkingSlotDto = { slotCode: 'A1' };
       const parkingSlot = await parkingSlotService.create(createParkingSlotDto);
 
       const createReservationDto: CreateReservationDto = {
