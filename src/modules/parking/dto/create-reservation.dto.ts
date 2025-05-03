@@ -8,7 +8,11 @@ export class CreateReservationDto {
 
   @IsString()
   @MaxLength(100)
-  actualEntryTime: string;
+  entryTime: string;
+
+  @IsString()
+  @MaxLength(100)
+  exitTime: string;
 
   @Type(() => Number)
   @IsNumber({ allowNaN: false, maxDecimalPlaces: 2 })

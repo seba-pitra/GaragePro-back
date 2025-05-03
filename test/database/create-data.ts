@@ -96,6 +96,8 @@ export const createReservationData = async (datasource: DataSource) => {
     .values({
       actual_entry_time: new Date().toISOString(),
       basic_cost: 30.33,
+      entry_time: new Date(new Date().getTime() + 10000).toISOString(),
+      exit_time: new Date(new Date().getTime() + 60000).toISOString(),
       duration_in_minutes: 60,
       user,
     })

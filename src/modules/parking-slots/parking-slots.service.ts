@@ -68,10 +68,6 @@ export class ParkingSlotsService {
       updateData.slot_code = data.slotCode;
     }
 
-    if (data.IsReserved !== undefined) {
-      updateData.is_reserved = data.IsReserved;
-    }
-
     return updateData;
   }
 }

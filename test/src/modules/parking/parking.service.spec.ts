@@ -93,7 +93,8 @@ describe('Parking Service', () => {
 
     const createReservationDto: CreateReservationDto = {
       durationInMinutes: 60,
-      actualEntryTime: '2025-02-07T03:39:54.254Z',
+      entryTime: new Date(new Date().getTime() + 10000).toISOString(),
+      exitTime: new Date(new Date().getTime() + 60000).toISOString(),
       basicCost: 30.33,
       slotCode: 'A1',
     };
@@ -106,11 +107,12 @@ describe('Parking Service', () => {
       parking_slot: {
         id: expect.any(String),
         slot_code: parkingSlot.slot_code,
-        is_reserved: true,
       },
       reservation: {
-        actual_entry_time: createReservationDto.actualEntryTime,
+        actual_entry_time: null,
         actual_exit_time: null,
+        entry_time: createReservationDto.entryTime,
+        exit_time: createReservationDto.exitTime,
         basic_cost: createReservationDto.basicCost,
         duration_in_minutes: createReservationDto.durationInMinutes,
         is_paid: null,
@@ -141,16 +143,22 @@ describe('Parking Service', () => {
 
       const createReservationDto: CreateReservationDto = {
         durationInMinutes: 60,
-        actualEntryTime: new Date().toISOString(),
+        entryTime: new Date(new Date().getTime() + 10000).toISOString(),
+        exitTime: new Date(new Date().getTime() + 60000).toISOString(),
         basicCost: 30.33,
         slotCode: parkingSlot.slot_code,
       };
 
       await parkingService.reserve(newUser, createReservationDto);
+
+      await parkingService.reserve(newUser, createReservationDto);
+
       expect(true).toBeFalsy();
     } catch (error) {
       expect(error).toBeInstanceOf(BadRequestException);
-      expect(error.message).toBe('Parking Slot was already reserved');
+      expect(error.message).toBe(
+        'There is already a reservation in this slot for the selected time',
+      );
     }
   });
 
@@ -203,7 +211,6 @@ describe('Parking Service', () => {
         id: expect.any(String),
         parking_slot: expect.objectContaining({
           id: expect.any(String),
-          is_reserved: true,
           slot_code: expect.any(String),
         }),
         reservation: expect.objectContaining({
@@ -245,7 +252,6 @@ describe('Parking Service', () => {
       id: expect.any(String),
       parking_slot: {
         id: expect.any(String),
-        is_reserved: expect.any(Boolean),
         slot_code: expect.any(String),
       },
       reservation: {
@@ -285,7 +291,6 @@ describe('Parking Service', () => {
       id: expect.any(String),
       parking_slot: {
         id: expect.any(String),
-        is_reserved: false,
         slot_code: expect.any(String),
       },
       reservation: {

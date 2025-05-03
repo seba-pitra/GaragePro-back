@@ -10,6 +10,12 @@ export class Reservation {
   @Column('integer', { default: 1, nullable: true })
   duration_in_minutes: number;
 
+  @Column('timestamp', { nullable: false })
+  entry_time: Date;
+
+  @Column('timestamp', { nullable: false })
+  exit_time: Date;
+
   @Column('timestamp', { nullable: true })
   actual_entry_time: Date;
 
