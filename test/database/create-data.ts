@@ -68,7 +68,6 @@ export const createParkingSlotData = async (
   const data = { slot_code: 'A1', is_reserved: true };
 
   if (createParkingSlotDto) {
-    data.is_reserved = createParkingSlotDto.IsReserved;
     data.slot_code = createParkingSlotDto.slotCode;
   }
 

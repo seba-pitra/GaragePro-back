@@ -128,7 +128,7 @@ export class ParkingService {
   async unoccupy(id: string, unoccupyReservationDto: UnoccupyReservationDto) {
     const { reservation } = await this.findOne(id);
 
-    const { actualExitTime, slotCode, isPaid } = unoccupyReservationDto;
+    const { actualExitTime, isPaid } = unoccupyReservationDto;
 
     await this.reservationRepository.update(reservation.id, {
       actual_exit_time: actualExitTime,
