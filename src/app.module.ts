@@ -3,9 +3,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import { envConfiguration } from './config/env.config';
-import { AuthModule } from './modules/auth/auth.module';
+import { UserModule } from './modules/users/user.module';
 import { joiValidationSchema } from './config/joi.validation';
-import { User } from './modules/auth/entities/user.entity';
+import { User } from './modules/users/entities/user.entity';
 import { VehiclesModule } from './modules/vehicles/vehicles.module';
 import { Vehicle } from './modules/vehicles/entities/vehicle.entity';
 import { Reservation } from './modules/parking/entities/reservation.entity';
@@ -38,7 +38,7 @@ import { ParkingSlot } from './modules/parking-slots/entities/parking-slot.entit
       },
     }),
 
-    AuthModule,
+    UserModule,
 
     VehiclesModule,
 

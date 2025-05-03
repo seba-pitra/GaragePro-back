@@ -5,7 +5,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { VehiclesModule } from '@/modules/vehicles/vehicles.module';
-import { User } from '@/modules/auth/entities/user.entity';
 import { Vehicle } from '@/modules/vehicles/entities/vehicle.entity';
 import { TransformResponseInterceptor } from '@/common/interceptors/transform-response.interceptor';
 import { createVehiclesData } from '../database/create-data';
@@ -13,12 +12,13 @@ import { createTestDatabase } from '../database/init';
 import { HttpExceptionFilter } from '@/common/filters/http-exception.filters';
 import { CreateVehicleDto } from '@/modules/vehicles/dto/create-vehicle.dto';
 import { UpdateVehicleDto } from '@/modules/vehicles/dto/update-vehicle.dto';
-import { AuthModule } from '@/modules/auth/auth.module';
-import { CreateUserDto } from '@/modules/auth/dto/create-user.dto';
-import { ValidRoles } from '@/modules/auth/interfaces/valid-roles.interface';
 import { Reservation } from '@/modules/parking/entities/reservation.entity';
 import { ReservationSlot } from '@/modules/parking/entities/reservation-slot.entity';
 import { ParkingSlot } from '@/modules/parking-slots/entities/parking-slot.entity';
+import { User } from '@/modules/users/entities/user.entity';
+import { UserModule } from '@/modules/users/user.module';
+import { CreateUserDto } from '@/modules/users/dto/create-user.dto';
+import { ValidRoles } from '@/modules/users/interfaces/valid-roles.interface';
 
 describe('Vehicles (e2e)', () => {
   const dataSource = createTestDatabase();
@@ -53,7 +53,7 @@ describe('Vehicles (e2e)', () => {
           },
         }),
         TypeOrmModule.forFeature([Reservation, ReservationSlot, ParkingSlot, User, Vehicle]),
-        AuthModule,
+        UserModule,
         VehiclesModule,
       ],
       providers: [

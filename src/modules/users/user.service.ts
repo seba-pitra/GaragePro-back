@@ -15,7 +15,7 @@ import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { comparePasswords, encryptPassword } from '@/utils/encrypt';
 
 @Injectable()
-export class AuthService {
+export class UserService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
@@ -48,15 +48,16 @@ export class AuthService {
   async login(loginUserDto: LoginUserDto) {
     const { email, password } = loginUserDto;
 
-    const user = await this.userRepository.findOneBy({ email });
+    const user = await this.userRepository.findOne({
+      where: { email },
+      select: { email: true, password: true },
+    });
     if (!user) throw new NotFoundException(`User not found with email: ${email}`);
 
     const passwordMatch = await comparePasswords(password, user.password);
     if (!passwordMatch) throw new UnauthorizedException('Password is not correct');
 
-    delete user.id;
     delete user.password;
-    delete user.createdAt;
 
     return {
       user,

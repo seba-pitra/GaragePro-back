@@ -1,6 +1,6 @@
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
-import { User } from '@/modules/auth/entities/user.entity';
 import { ReservationSlot } from './reservation-slot.entity';
+import { User } from '@/modules/users/entities/user.entity';
 
 @Entity('reservations')
 export class Reservation {

@@ -5,7 +5,6 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 
 import { createTestDatabase } from '../../../database/init';
 import { createReservationData, createUserData } from '../../../database/create-data';
-import { User } from '@/modules/auth/entities/user.entity';
 import { PaginationDto } from '@/common/dtos/pagination.dto';
 import { Reservation } from '@/modules/parking/entities/reservation.entity';
 import { ReservationSlot } from '@/modules/parking/entities/reservation-slot.entity';
@@ -18,6 +17,7 @@ import { CreateParkingSlotDto } from '@/modules/parking-slots/dto/create-parking
 import { CreateTotalCostDto } from '@/modules/parking/dto/create-total-cost.dto';
 import { UnoccupyReservationDto } from '@/modules/parking/dto/unoccupy-reservation.dto';
 import { Vehicle } from '@/modules/vehicles/entities/vehicle.entity';
+import { User } from '@/modules/users/entities/user.entity';
 
 describe('Parking Service', () => {
   let parkingService: ParkingService;

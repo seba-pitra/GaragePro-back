@@ -1,13 +1,13 @@
 import { Controller, Get, Post, Body, Patch, Param, Query } from '@nestjs/common';
 import { ParkingService } from './parking.service';
 import { CreateReservationDto } from './dto/create-reservation.dto';
-import { GetUser } from '@/modules/auth/decorators/get-user.decorator';
-import { User } from '@/modules/auth/entities/user.entity';
-import { Auth } from '@/modules/auth/decorators/auth.decorator';
-import { ValidRoles } from '@/modules/auth/interfaces/valid-roles.interface';
 import { PaginationDto } from '@/common/dtos/pagination.dto';
 import { UnoccupyReservationDto } from './dto/unoccupy-reservation.dto';
 import { CreateTotalCostDto } from './dto/create-total-cost.dto';
+import { ValidRoles } from '../users/interfaces/valid-roles.interface';
+import { Auth } from '../users/decorators/auth.decorator';
+import { User } from '../users/entities/user.entity';
+import { GetUser } from '../users/decorators/get-user.decorator';
 
 @Controller('parking')
 export class ParkingController {

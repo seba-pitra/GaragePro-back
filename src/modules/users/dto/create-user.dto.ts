@@ -1,11 +1,21 @@
-import { IsEmail, IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
+import {
+  IsAlpha,
+  IsEmail,
+  IsOptional,
+  IsString,
+  Matches,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
 export class CreateUserDto {
   @IsString()
+  @IsAlpha('en-US', { message: 'The first name must have only letters' })
   @MaxLength(255)
   firstName: string;
 
   @IsString()
+  @IsAlpha('en-US', { message: 'The last name must have only letters' })
   @MaxLength(255)
   lastName: string;
 
