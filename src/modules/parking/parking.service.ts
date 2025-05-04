@@ -175,15 +175,15 @@ export class ParkingService {
 
     if (pendingReservations.length === 0) return;
 
-    pendingReservations.forEach(async (reservation) => {
+    for (const reservation of pendingReservations) {
       const now = new Date();
       const reservationTime = new Date(reservation.booking_date);
       const diffInMinutes = Math.floor((now.getTime() - reservationTime.getTime()) / (1000 * 60));
 
       if (diffInMinutes >= 10) {
-        await this.update(reservation.id, { status: Status.expired });
+        await this.reservationRepository.update(reservation.id, { status: Status.expired });
       }
-    });
+    }
   }
 
   private async verifyIfSlotIsReserved(options: {

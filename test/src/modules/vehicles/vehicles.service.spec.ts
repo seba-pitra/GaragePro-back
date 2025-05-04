@@ -78,8 +78,8 @@ describe('Vehicle Service', () => {
 
   it('create should create a vehicle', async () => {
     const newUser = userRepository.create({
-      firstName: 'test_user',
-      lastName: 'test_lastnma',
+      first_name: 'test_user',
+      last_name: 'test_lastnma',
       email: 'testMail01@gmail.com',
       password: 'testPassword1',
       phone: '1111611111',

@@ -8,7 +8,7 @@ import { PaginationDto } from '@/common/dtos/pagination.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
 @Controller('user')
-export class AuthController {
+export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Post('/register')

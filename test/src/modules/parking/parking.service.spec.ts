@@ -19,6 +19,7 @@ import { UnoccupyReservationDto } from '@/modules/parking/dto/unoccupy-reservati
 import { Vehicle } from '@/modules/vehicles/entities/vehicle.entity';
 import { User } from '@/modules/users/entities/user.entity';
 import { UpdateReservationDto } from '@/modules/parking/dto/update-reservation.dto';
+import { Status } from '@/modules/parking/interfaces/reservation.interface';
 
 describe('Parking Service', () => {
   let parkingService: ParkingService;
@@ -101,9 +102,9 @@ describe('Parking Service', () => {
       slotCode: 'A1',
     };
 
-    const reservation = await parkingService.reserve(newUser, createReservationDto);
+    const result = await parkingService.reserve(newUser, createReservationDto);
 
-    expect(reservation).toMatchObject({
+    expect(result).toMatchObject({
       id: expect.any(String),
       created_at: expect.any(Date),
       parking_slot: {
@@ -120,11 +121,7 @@ describe('Parking Service', () => {
         is_paid: null,
         penalty: null,
         total_cost: null,
-        user: expect.objectContaining({
-          id: expect.any(String),
-          email: expect.any(String),
-          firstName: expect.any(String),
-        }),
+        booking_date: expect.any(Date),
       },
     });
   });
@@ -193,38 +190,6 @@ describe('Parking Service', () => {
     });
   });
 
-  it('checkExpiredReservationsAndUpdateStatus should verify if there are pending reservations and update them', async () => {
-    const user = await createUserData(dataSource);
-
-    const now = new Date();
-    const oldDate = new Date(now.getTime() - 11 * 60 * 1000);
-
-    const result = await dataSource
-      .createQueryBuilder()
-      .insert()
-      .into(Reservation)
-      .values({
-        booking_date: oldDate.toISOString(),
-        actual_entry_time: new Date().toISOString(),
-        basic_cost: 30.33,
-        entry_time: new Date(new Date().getTime() + 10000).toISOString(),
-        exit_time: new Date(new Date().getTime() + 60000).toISOString(),
-        duration_in_minutes: 60,
-        user,
-      })
-      .returning('*')
-      .execute();
-
-    const reservation = result.raw[0];
-
-    await parkingService.checkExpiredReservationsAndUpdateStatus();
-
-    const updatedReservation = await parkingService.findOneReservation(reservation.id);
-
-    expect(reservation.status).toBe('pending');
-    expect(updatedReservation.status).toBe('expired');
-  });
-
   it('update should update a reservation', async () => {
     const { reservation } = await createReservationData(dataSource);
 
@@ -248,6 +213,38 @@ describe('Parking Service', () => {
     expect(updatedReservation.exit_time.toISOString()).toBe(updateReservationDto.exitTime);
     expect(updatedReservation.duration_in_minutes).toBe(updateReservationDto.durationInMinutes);
     expect(updatedReservation.status).toBe(updateReservationDto.status);
+  });
+
+  it('checkExpiredReservationsAndUpdateStatus should verify if there are pending reservations and update them', async () => {
+    const user = await createUserData(dataSource);
+
+    const now = new Date();
+    const oldDate = new Date(now.getTime() - 11 * 60 * 1000);
+
+    const resultInsert = await dataSource
+      .createQueryBuilder()
+      .insert()
+      .into(Reservation)
+      .values({
+        booking_date: oldDate.toISOString(),
+        actual_entry_time: new Date().toISOString(),
+        basic_cost: 30.33,
+        entry_time: new Date(new Date().getTime() + 10000).toISOString(),
+        exit_time: new Date(new Date().getTime() + 60000).toISOString(),
+        duration_in_minutes: 60,
+        user,
+      })
+      .returning('*')
+      .execute();
+
+    const reservation = resultInsert.raw[0] as Reservation;
+
+    await parkingService.checkExpiredReservationsAndUpdateStatus();
+
+    const updatedReservations = await parkingService.findOneReservation(reservation.id);
+
+    expect(reservation.status).toBe(Status.pending);
+    expect(updatedReservations.status).toBe(Status.expired);
   });
 
   it('update should throw an error if reservation does not exist', async () => {

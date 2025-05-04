@@ -17,7 +17,7 @@ export class UpdateUserDto {
   @IsString()
   @IsAlpha('en-US', { message: 'The first name must have only letters' })
   @MaxLength(255)
-  firstName: string;
+  firstName?: string;
 
   @IsOptional()
   @IsString()
@@ -28,7 +28,7 @@ export class UpdateUserDto {
   @IsOptional()
   @IsString()
   @IsEmail()
-  email: string;
+  email?: string;
 
   @IsOptional()
   @IsString()
@@ -37,23 +37,23 @@ export class UpdateUserDto {
   @Matches(/(?:(?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/, {
     message: 'The password must have a Uppercase, lowercase letter and a number',
   })
-  password: string;
+  password?: string;
 
   @IsOptional()
   @IsArray()
   @IsEnum(ValidRoles, { each: true })
-  roles: ValidRoles[];
+  roles?: ValidRoles[];
 
   @IsOptional()
   @IsBoolean()
-  isRegularCustomer: boolean;
+  isRegularCustomer?: boolean;
 
   @IsOptional()
   @IsBoolean()
-  isActive: boolean;
+  isActive?: boolean;
 
   @IsOptional()
   @IsString()
   @MaxLength(255)
-  phone: string;
+  phone?: string;
 }

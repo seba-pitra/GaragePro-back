@@ -87,6 +87,10 @@ export class UserService {
       take: limit,
     });
 
+    if (!users.length) {
+      throw new NotFoundException('No users found');
+    }
+
     return { users, total: users.length };
   }
 
@@ -116,12 +120,14 @@ export class UserService {
     const updatedUser = await this.userRepository.findOneBy({ id: id });
     delete updatedUser.password;
 
-    return updatedUser;
+    return { user: updatedUser };
   }
 
   async delete(email: string) {
     const user = await this.userRepository.findOneBy({ email });
+
     if (!user) throw new NotFoundException(`User not found with email: ${email}`);
+
     const { id } = user;
 
     await this.userRepository.update(id, {
@@ -130,7 +136,7 @@ export class UserService {
 
     user.is_active = false;
 
-    return user;
+    return { user };
   }
 
   private getNewToken(payload: JwtPayload) {
