@@ -1,6 +1,6 @@
-import { getPropsToUpdate } from '@/utils/getPropsToUpdate';
+import { getPropsToDatabase } from '@/utils/getPropsToDatabase';
 
-describe('getPropsToUpdate', () => {
+describe('getPropsToDatabase', () => {
   it('should return an object with keys in snake_case and values unchanged', () => {
     const input = {
       firstName: 'John',
@@ -16,6 +16,6 @@ describe('getPropsToUpdate', () => {
       is_active: true,
     };
 
-    expect(getPropsToUpdate(input)).toEqual(expectedOutput);
+    expect(getPropsToDatabase(input)).toEqual(expectedOutput);
   });
 });

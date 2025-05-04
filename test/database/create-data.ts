@@ -6,6 +6,7 @@ import { Reservation } from '@/modules/parking/entities/reservation.entity';
 import { Vehicle } from '@/modules/vehicles/entities/vehicle.entity';
 import { User } from '@/modules/users/entities/user.entity';
 import { CreateUserDto } from '@/modules/users/dto/create-user.dto';
+import { encryptPassword } from '@/utils/encrypt';
 
 export const createVehiclesData = async (datasource: DataSource) => {
   const user = await createUserData(datasource);
@@ -33,20 +34,23 @@ export const createVehiclesData = async (datasource: DataSource) => {
 
 export const createUserData = async (datasource: DataSource, createUserDto?: CreateUserDto) => {
   const data = {
-    email: 'test_user',
-    firstName: 'test_user',
-    lastName: 'test_lastnma',
+    email: 'test_user@gmail.com',
+    first_name: 'test_user',
+    last_name: 'test_lastnma',
     password: 'testPassword1',
     phone: '1111611111',
   };
 
   if (createUserDto) {
     data.email = createUserDto.email;
-    data.firstName = createUserDto.firstName;
-    data.lastName = createUserDto.lastName;
+    data.first_name = createUserDto.firstName;
+    data.last_name = createUserDto.lastName;
     data.password = createUserDto.password;
     data.phone = createUserDto.phone;
   }
+
+  let { password } = data;
+  data.password = await encryptPassword(password);
 
   const result = await datasource
     .createQueryBuilder()
@@ -58,7 +62,7 @@ export const createUserData = async (datasource: DataSource, createUserDto?: Cre
 
   const user = result.raw[0];
 
-  return user;
+  return user as User;
 };
 
 export const createParkingSlotData = async (

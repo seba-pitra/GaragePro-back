@@ -87,8 +87,8 @@ describe('Parking (e2e)', () => {
       password: 'testPassword1',
       phone: '11112111122',
     };
-    const AuthRes = await request(app.getHttpServer()).post('/auth/register').send(createUserDto);
-    token = AuthRes.body.data.token;
+    const authRes = await request(app.getHttpServer()).post('/user/register').send(createUserDto);
+    token = authRes.body.data.token;
 
     await dataSource
       .createQueryBuilder()
@@ -140,11 +140,11 @@ describe('Parking (e2e)', () => {
         total_cost: null,
         user: {
           email: expect.any(String),
-          firstName: expect.any(String),
+          first_name: expect.any(String),
           id: expect.any(String),
-          isActive: expect.any(Boolean),
-          isRegularCustomer: expect.any(Boolean),
-          lastName: expect.any(String),
+          is_active: expect.any(Boolean),
+          is_regular_customer: expect.any(Boolean),
+          last_name: expect.any(String),
           phone: expect.any(String),
           roles: expect.any(Array),
         },

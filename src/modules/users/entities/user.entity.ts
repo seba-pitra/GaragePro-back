@@ -6,10 +6,10 @@ export class User {
   id: string;
 
   @Column('varchar', { length: 255 })
-  firstName: string;
+  first_name: string;
 
   @Column('varchar', { length: 255 })
-  lastName: string;
+  last_name: string;
 
   @Column('varchar', { length: 255, unique: true })
   email: string;
@@ -21,16 +21,16 @@ export class User {
   roles: string[];
 
   @Column('boolean', { default: true })
-  isActive: boolean;
+  is_active: boolean;
 
   @Column('boolean', { default: false })
-  isRegularCustomer: boolean;
+  is_regular_customer: boolean;
 
   @Column('varchar', { length: 255, nullable: true })
   phone: string;
 
   @Column('timestamp', { default: () => 'CURRENT_TIMESTAMP' })
-  createdAt: Date;
+  created_at: Date;
 
   @BeforeInsert()
   checkFieldBeforeInsert() {
