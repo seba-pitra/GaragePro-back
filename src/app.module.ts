@@ -13,6 +13,7 @@ import { ReservationSlot } from './modules/parking/entities/reservation-slot.ent
 import { ParkingModule } from './modules/parking/parking.module';
 import { ParkingSlotsModule } from './modules/parking-slots/parking-slots.module';
 import { ParkingSlot } from './modules/parking-slots/entities/parking-slot.entity';
+import { TasksModule } from './modules/tasks/tasks.module';
 
 @Module({
   imports: [
@@ -45,6 +46,8 @@ import { ParkingSlot } from './modules/parking-slots/entities/parking-slot.entit
     ParkingModule,
 
     ParkingSlotsModule,
+
+    TasksModule,
   ],
 })
 export class AppModule {}
