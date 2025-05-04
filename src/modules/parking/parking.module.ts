@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+
 import { ParkingService } from './parking.service';
 import { ParkingController } from './parking.controller';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { Reservation } from './entities/reservation.entity';
 import { ReservationSlot } from './entities/reservation-slot.entity';
 import { ParkingSlotsModule } from '../parking-slots/parking-slots.module';
@@ -16,5 +17,6 @@ import { User } from '../users/entities/user.entity';
   ],
   controllers: [ParkingController],
   providers: [ParkingService],
+  exports: [ParkingService],
 })
 export class ParkingModule {}

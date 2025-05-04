@@ -18,6 +18,7 @@ import { CreateTotalCostDto } from '@/modules/parking/dto/create-total-cost.dto'
 import { UnoccupyReservationDto } from '@/modules/parking/dto/unoccupy-reservation.dto';
 import { Vehicle } from '@/modules/vehicles/entities/vehicle.entity';
 import { User } from '@/modules/users/entities/user.entity';
+import { UpdateReservationDto } from '@/modules/parking/dto/update-reservation.dto';
 
 describe('Parking Service', () => {
   let parkingService: ParkingService;
@@ -72,7 +73,8 @@ describe('Parking Service', () => {
   it('should have proper methods', () => {
     expect(parkingService.createTotalCost).toBeDefined();
     expect(parkingService.findAll).toBeDefined();
-    expect(parkingService.findOne).toBeDefined();
+    expect(parkingService.findOneReservation).toBeDefined();
+    expect(parkingService.findOneReservationSlot).toBeDefined();
     expect(parkingService.reserve).toBeDefined();
     expect(parkingService.unoccupy).toBeDefined();
   });
@@ -129,29 +131,19 @@ describe('Parking Service', () => {
 
   it('reserve should throw an error if parking slot is already reserved', async () => {
     try {
-      const createUserDto = {
-        email: 'test_reserve@gmail.com',
-        firstName: 'test_user',
-        lastName: 'test_lastnma',
-        password: 'testPassword1',
-        phone: '1111611111',
-      };
-
-      const newUser = await createUserData(dataSource, createUserDto);
-      const createParkingSlotDto: CreateParkingSlotDto = { slotCode: 'A1' };
-      const parkingSlot = await parkingSlotService.create(createParkingSlotDto);
+      const { user, slot } = await createReservationData(dataSource);
 
       const createReservationDto: CreateReservationDto = {
         durationInMinutes: 60,
         entryTime: new Date(new Date().getTime() + 10000).toISOString(),
         exitTime: new Date(new Date().getTime() + 60000).toISOString(),
         basicCost: 30.33,
-        slotCode: parkingSlot.slot_code,
+        slotCode: slot.slot_code,
       };
 
-      await parkingService.reserve(newUser, createReservationDto);
+      await parkingService.reserve(user, createReservationDto);
 
-      await parkingService.reserve(newUser, createReservationDto);
+      await parkingService.reserve(user, createReservationDto);
 
       expect(true).toBeFalsy();
     } catch (error) {
@@ -163,7 +155,8 @@ describe('Parking Service', () => {
   });
 
   it('createTotalCost should calculate the total cost', async () => {
-    const { id } = await createReservationData(dataSource);
+    const { reservationSlot } = await createReservationData(dataSource);
+    const { id } = reservationSlot;
 
     const createTotalCostDto: CreateTotalCostDto = {
       actualExitTime: new Date().toISOString(),
@@ -180,7 +173,8 @@ describe('Parking Service', () => {
   });
 
   it('createTotalCost should calculate the total cost considering penalty for extra time', async () => {
-    const { id, reservation } = await createReservationData(dataSource);
+    const { reservationSlot } = await createReservationData(dataSource);
+    const { id } = reservationSlot;
 
     const date = new Date();
     date.setMinutes(date.getMinutes() + 90);
@@ -197,6 +191,80 @@ describe('Parking Service', () => {
       penaltyCost: 15,
       totalCost: 45.33,
     });
+  });
+
+  it('checkExpiredReservationsAndUpdateStatus should verify if there are pending reservations and update them', async () => {
+    const user = await createUserData(dataSource);
+
+    const now = new Date();
+    const oldDate = new Date(now.getTime() - 11 * 60 * 1000);
+
+    const result = await dataSource
+      .createQueryBuilder()
+      .insert()
+      .into(Reservation)
+      .values({
+        booking_date: oldDate.toISOString(),
+        actual_entry_time: new Date().toISOString(),
+        basic_cost: 30.33,
+        entry_time: new Date(new Date().getTime() + 10000).toISOString(),
+        exit_time: new Date(new Date().getTime() + 60000).toISOString(),
+        duration_in_minutes: 60,
+        user,
+      })
+      .returning('*')
+      .execute();
+
+    const reservation = result.raw[0];
+
+    await parkingService.checkExpiredReservationsAndUpdateStatus();
+
+    const updatedReservation = await parkingService.findOneReservation(reservation.id);
+
+    expect(reservation.status).toBe('pending');
+    expect(updatedReservation.status).toBe('expired');
+  });
+
+  it('update should update a reservation', async () => {
+    const { reservation } = await createReservationData(dataSource);
+
+    const { id } = reservation;
+
+    const updateReservationDto: UpdateReservationDto = {
+      status: 'confirmed',
+      durationInMinutes: 120,
+      entryTime: new Date(new Date().getTime() + 10000).toISOString(),
+      exitTime: new Date(new Date().getTime() + 120000).toISOString(),
+    };
+
+    const updatedReservation = await parkingService.update(id, updateReservationDto);
+
+    expect(updatedReservation.entry_time).not.toBe(reservation.entry_time);
+    expect(updatedReservation.exit_time).not.toBe(reservation.exit_time);
+    expect(updatedReservation.duration_in_minutes).not.toBe(reservation.duration_in_minutes);
+    expect(updatedReservation.status).not.toBe(reservation.status);
+
+    expect(updatedReservation.entry_time.toISOString()).toBe(updateReservationDto.entryTime);
+    expect(updatedReservation.exit_time.toISOString()).toBe(updateReservationDto.exitTime);
+    expect(updatedReservation.duration_in_minutes).toBe(updateReservationDto.durationInMinutes);
+    expect(updatedReservation.status).toBe(updateReservationDto.status);
+  });
+
+  it('update should throw an error if reservation does not exist', async () => {
+    const updateReservationDto: UpdateReservationDto = {
+      status: 'confirmed',
+      durationInMinutes: 120,
+      entryTime: new Date(new Date().getTime() + 10000).toISOString(),
+      exitTime: new Date(new Date().getTime() + 120000).toISOString(),
+    };
+    try {
+      await parkingService.update('92b5aa6d-242f-4f71-b6d6-f7ae1d889a37', updateReservationDto);
+
+      expect(true).toBeFalsy();
+    } catch (error) {
+      expect(error).toBeInstanceOf(NotFoundException);
+      expect(error.message).toBe('Reservation not found');
+    }
   });
 
   it('findAll should return an array of reservations', async () => {
@@ -239,10 +307,10 @@ describe('Parking Service', () => {
     }
   });
 
-  it('findOne should return a reservation', async () => {
-    const reservation = await createReservationData(dataSource);
+  it('findOneReservationSlot should return a reservation', async () => {
+    const { reservationSlot } = await createReservationData(dataSource);
 
-    const result = await parkingService.findOne(reservation.id);
+    const result = await parkingService.findOneReservationSlot(reservationSlot.id);
 
     expect(result.reservation).toHaveProperty('is_paid');
     expect(result.reservation).toHaveProperty('penalty');
@@ -264,9 +332,9 @@ describe('Parking Service', () => {
     });
   });
 
-  it('findOne should throw an error if reservation does not exist', async () => {
+  it('findOneReservationSlot should throw an error if reservation does not exist', async () => {
     try {
-      await parkingService.findOne('92b5aa6d-242f-4f71-b6d6-f7ae1d889a37');
+      await parkingService.findOneReservationSlot('92b5aa6d-242f-4f71-b6d6-f7ae1d889a37');
       expect(true).toBeFalsy();
     } catch (error) {
       expect(error).toBeInstanceOf(NotFoundException);
@@ -275,7 +343,8 @@ describe('Parking Service', () => {
   });
 
   it('unoccupy should update free up a parking slot', async () => {
-    const { id } = await createReservationData(dataSource);
+    const { reservationSlot } = await createReservationData(dataSource);
+    const { id } = reservationSlot;
 
     const unoccupyReservationDto: UnoccupyReservationDto = {
       actualExitTime: new Date().toISOString(),

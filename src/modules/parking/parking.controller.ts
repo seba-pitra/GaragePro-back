@@ -8,6 +8,7 @@ import { ValidRoles } from '../users/interfaces/valid-roles.interface';
 import { Auth } from '../users/decorators/auth.decorator';
 import { User } from '../users/entities/user.entity';
 import { GetUser } from '../users/decorators/get-user.decorator';
+import { UpdateReservationDto } from './dto/update-reservation.dto';
 
 @Controller('parking')
 export class ParkingController {
@@ -34,7 +35,13 @@ export class ParkingController {
   @Get(':id')
   @Auth(ValidRoles.admin)
   findOne(@Param('id') id: string) {
-    return this.parkingService.findOne(id);
+    return this.parkingService.findOneReservationSlot(id);
+  }
+
+  @Patch('/:id')
+  @Auth(ValidRoles.customer, ValidRoles.employee, ValidRoles.admin)
+  update(@Param('id') id: string, @Body() updateReservationDto: UpdateReservationDto) {
+    return this.parkingService.update(id, updateReservationDto);
   }
 
   @Patch('/unoccupy/:id')

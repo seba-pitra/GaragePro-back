@@ -20,6 +20,7 @@ import { User } from '@/modules/users/entities/user.entity';
 import { UserModule } from '@/modules/users/user.module';
 import { CreateUserDto } from '@/modules/users/dto/create-user.dto';
 import { ValidRoles } from '@/modules/users/interfaces/valid-roles.interface';
+import { UpdateReservationDto } from '@/modules/parking/dto/update-reservation.dto';
 
 describe('Parking (e2e)', () => {
   const dataSource = createTestDatabase();
@@ -217,10 +218,11 @@ describe('Parking (e2e)', () => {
   });
 
   it('/POST /parking/create-total-cost/:id should return the cost of a reservation', async () => {
-    const reservation = await createReservationData(dataSource);
+    const { reservationSlot } = await createReservationData(dataSource);
+    const { id } = reservationSlot;
 
     const { body } = await request(app.getHttpServer())
-      .post(`/parking/create-total-cost/${reservation.id}`)
+      .post(`/parking/create-total-cost/${id}`)
       .send({ actualExitTime: new Date().toISOString() })
       .set('Authorization', `Bearer  ${token}`)
       .expect(201);
@@ -311,7 +313,8 @@ describe('Parking (e2e)', () => {
   });
 
   it('/GET /parking/:id should return a reservation', async () => {
-    const { id } = await createReservationData(dataSource);
+    const { reservationSlot } = await createReservationData(dataSource);
+    const { id } = reservationSlot;
 
     const { body } = await request(app.getHttpServer())
       .get(`/parking/${id}`)
@@ -362,8 +365,29 @@ describe('Parking (e2e)', () => {
     });
   });
 
-  it('/PATCH /parking/:id  should free up a parking slot', async () => {
-    const { id } = await createReservationData(dataSource);
+  it('/PATCH /parking/update/:id should update a reservation', async () => {
+    const { reservation } = await createReservationData(dataSource);
+
+    const updateReservationDto: UpdateReservationDto = {
+      actualExitTime: new Date().toISOString(),
+      status: 'confirmed',
+    };
+
+    const { body } = await request(app.getHttpServer())
+      .patch(`/parking/${reservation.id}`)
+      .set('Authorization', `Bearer  ${token}`)
+      .send(updateReservationDto)
+      .expect(200);
+
+    expect(body).toHaveProperty('data');
+    expect(body).toHaveProperty('ok');
+    expect(body).toHaveProperty('timestamps');
+    expect(body.data).toMatchObject({});
+  });
+
+  it('/PATCH /parking/unoccupy/:id  should free up a parking slot', async () => {
+    const { reservationSlot } = await createReservationData(dataSource);
+    const { id } = reservationSlot;
 
     const unoccupyReservationDto: UnoccupyReservationDto = {
       actualExitTime: new Date().toISOString(),
@@ -400,7 +424,7 @@ describe('Parking (e2e)', () => {
     });
   });
 
-  it('/PATCH /vehicles/:id should throw an error if there is not a vehicle with given id in database', async () => {
+  it('/PATCH /parking/unoccupy/:id should throw an error if there is not a reservation with given id in database', async () => {
     const fakeId = '92b5aa6d-242f-4f71-b6d6-f7ae1d889a37';
 
     const unoccupyReservationDto: UnoccupyReservationDto = {

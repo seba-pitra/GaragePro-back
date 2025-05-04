@@ -10,6 +10,9 @@ import { ParkingSlotsService } from '../parking-slots/parking-slots.service';
 import { PaginationDto } from '@/common/dtos/pagination.dto';
 import { UnoccupyReservationDto } from './dto/unoccupy-reservation.dto';
 import { CreateTotalCostDto } from './dto/create-total-cost.dto';
+import { UpdateReservationDto } from './dto/update-reservation.dto';
+import { getPropsToUpdate } from '@/utils/getPropsToUpdate';
+import { Status } from './interfaces/reservation.interface';
 
 @Injectable()
 export class ParkingService {
@@ -41,7 +44,7 @@ export class ParkingService {
 
   async createTotalCost(id: string, createTotalCostDto: CreateTotalCostDto) {
     const { actualExitTime } = createTotalCostDto;
-    const { reservation } = await this.findOne(id);
+    const { reservation } = await this.findOneReservationSlot(id);
 
     const { basicCost, extraTimeUsedMinutes, penaltyCost, totalCost } = this.calculateCost({
       actualEntryDate: reservation.actual_entry_time,
@@ -58,7 +61,7 @@ export class ParkingService {
   private async createReservation(user: User, createReservationDto: CreateReservationDto) {
     const { entryTime, exitTime, basicCost, durationInMinutes } = createReservationDto;
 
-    // 1. Verify that the entry and exit time are valid dates
+    // Verify that the entry and exit time are valid dates
     const areValidDates =
       !entryTime ||
       !exitTime ||
@@ -67,7 +70,7 @@ export class ParkingService {
 
     if (areValidDates) throw new BadRequestException('Invalid entry or exit time');
 
-    // 2. Verify that the entry and exit time are greater than the current date
+    // Verify that the entry and exit time are greater than the current date
     const currentDate = new Date();
     const entryDate = new Date(entryTime);
     const exitDate = new Date(exitTime);
@@ -76,14 +79,14 @@ export class ParkingService {
       throw new BadRequestException('Entry and exit time must be greater than current date');
     }
 
-    // 3. Lookup if there is already a reservation in that slot for the selected time
+    // Lookup if there is already a reservation in that slot for the selected time
     await this.verifyIfSlotIsReserved({
       slotCode: createReservationDto.slotCode,
       entryTime: entryTime,
       exitTime: exitTime,
     });
 
-    // 4. Create the reservation and return it
+    // Create the reservation and return it
     const newReservation = this.reservationRepository.create({
       entry_time: entryTime,
       exit_time: exitTime,
@@ -94,6 +97,31 @@ export class ParkingService {
     await this.reservationRepository.save(newReservation);
 
     return newReservation;
+  }
+
+  async update(id: string, updateReservationDto: UpdateReservationDto) {
+    await this.findOneReservation(id);
+
+    const propsToUpdate = getPropsToUpdate(updateReservationDto);
+
+    await this.reservationRepository.update(id, propsToUpdate);
+
+    const updatedReservation = await this.reservationRepository.findOneBy({ id });
+
+    return updatedReservation;
+  }
+
+  async unoccupy(id: string, unoccupyReservationDto: UnoccupyReservationDto) {
+    const { reservation } = await this.findOneReservationSlot(id);
+
+    const { actualExitTime, isPaid } = unoccupyReservationDto;
+
+    await this.reservationRepository.update(reservation.id, {
+      actual_exit_time: actualExitTime,
+      is_paid: isPaid,
+    });
+
+    return await this.findOneReservationSlot(id);
   }
 
   async findAll(paginationDto: PaginationDto) {
@@ -112,7 +140,15 @@ export class ParkingService {
     return reservations;
   }
 
-  async findOne(id: string) {
+  async findOneReservation(id: string) {
+    const reservation = await this.reservationRepository.findOneBy({ id });
+
+    if (!reservation) throw new NotFoundException('Reservation not found');
+
+    return reservation;
+  }
+
+  async findOneReservationSlot(id: string) {
     const reservation = await this.reservationSlotRepository
       .createQueryBuilder('reservation_slot')
       .where({ id })
@@ -125,17 +161,29 @@ export class ParkingService {
     return reservation;
   }
 
-  async unoccupy(id: string, unoccupyReservationDto: UnoccupyReservationDto) {
-    const { reservation } = await this.findOne(id);
+  async findByStatus(status: Status) {
+    const reservations = await this.reservationRepository
+      .createQueryBuilder('reservation')
+      .where('reservation.status = :status', { status })
+      .getMany();
 
-    const { actualExitTime, isPaid } = unoccupyReservationDto;
+    return reservations;
+  }
 
-    await this.reservationRepository.update(reservation.id, {
-      actual_exit_time: actualExitTime,
-      is_paid: isPaid,
+  async checkExpiredReservationsAndUpdateStatus() {
+    const pendingReservations = await this.findByStatus(Status.pending);
+
+    if (pendingReservations.length === 0) return;
+
+    pendingReservations.forEach(async (reservation) => {
+      const now = new Date();
+      const reservationTime = new Date(reservation.booking_date);
+      const diffInMinutes = Math.floor((now.getTime() - reservationTime.getTime()) / (1000 * 60));
+
+      if (diffInMinutes >= 10) {
+        await this.update(reservation.id, { status: Status.expired });
+      }
     });
-
-    return await this.findOne(id);
   }
 
   private async verifyIfSlotIsReserved(options: {
