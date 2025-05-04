@@ -108,7 +108,7 @@ export class ParkingService {
 
     const updatedReservation = await this.reservationRepository.findOneBy({ id });
 
-    return { user: updatedReservation };
+    return { reservation: updatedReservation };
   }
 
   async unoccupy(id: string, unoccupyReservationDto: UnoccupyReservationDto) {

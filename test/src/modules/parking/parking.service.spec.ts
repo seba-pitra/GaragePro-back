@@ -202,7 +202,10 @@ describe('Parking Service', () => {
       exitTime: new Date(new Date().getTime() + 120000).toISOString(),
     };
 
-    const updatedReservation = await parkingService.update(id, updateReservationDto);
+    const { reservation: updatedReservation } = await parkingService.update(
+      id,
+      updateReservationDto,
+    );
 
     expect(updatedReservation.entry_time).not.toBe(reservation.entry_time);
     expect(updatedReservation.exit_time).not.toBe(reservation.exit_time);

@@ -276,9 +276,9 @@ describe('User Service', () => {
   it('delete should update the property is_active of a user', async () => {
     const user = (await createUserData(dataSource)) as User;
 
-    const result = await service.delete(user.email);
+    const { user: resultUser } = await service.delete(user.email);
 
-    expect(result).toHaveProperty('is_active', false);
+    expect(resultUser).toHaveProperty('is_active', false);
   });
 
   it('delete should throw an error if user does not exist', async () => {
