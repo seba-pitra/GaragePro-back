@@ -12,6 +12,7 @@ import { UnoccupyReservationDto } from './dto/unoccupy-reservation.dto';
 import { CreateTotalCostDto } from './dto/create-total-cost.dto';
 import { UpdateReservationDto } from './dto/update-reservation.dto';
 import { getPropsToUpdate } from '@/utils/getPropsToUpdate';
+import { Status } from './interfaces/reservation.interface';
 
 @Injectable()
 export class ParkingService {
@@ -43,7 +44,7 @@ export class ParkingService {
 
   async createTotalCost(id: string, createTotalCostDto: CreateTotalCostDto) {
     const { actualExitTime } = createTotalCostDto;
-    const { reservation } = await this.findOne(id);
+    const { reservation } = await this.findOneReservationSlot(id);
 
     const { basicCost, extraTimeUsedMinutes, penaltyCost, totalCost } = this.calculateCost({
       actualEntryDate: reservation.actual_entry_time,
@@ -98,6 +99,31 @@ export class ParkingService {
     return newReservation;
   }
 
+  async update(id: string, updateReservationDto: UpdateReservationDto) {
+    await this.findOneReservation(id);
+
+    const propsToUpdate = getPropsToUpdate(updateReservationDto);
+
+    await this.reservationRepository.update(id, propsToUpdate);
+
+    const updatedReservation = await this.reservationRepository.findOneBy({ id });
+
+    return updatedReservation;
+  }
+
+  async unoccupy(id: string, unoccupyReservationDto: UnoccupyReservationDto) {
+    const { reservation } = await this.findOneReservationSlot(id);
+
+    const { actualExitTime, isPaid } = unoccupyReservationDto;
+
+    await this.reservationRepository.update(reservation.id, {
+      actual_exit_time: actualExitTime,
+      is_paid: isPaid,
+    });
+
+    return await this.findOneReservationSlot(id);
+  }
+
   async findAll(paginationDto: PaginationDto) {
     const { limit = 10, offset = 0 } = paginationDto;
 
@@ -114,7 +140,15 @@ export class ParkingService {
     return reservations;
   }
 
-  async findOne(id: string) {
+  async findOneReservation(id: string) {
+    const reservation = await this.reservationRepository.findOneBy({ id });
+
+    if (!reservation) throw new NotFoundException('Reservation not found');
+
+    return reservation;
+  }
+
+  async findOneReservationSlot(id: string) {
     const reservation = await this.reservationSlotRepository
       .createQueryBuilder('reservation_slot')
       .where({ id })
@@ -127,27 +161,29 @@ export class ParkingService {
     return reservation;
   }
 
-  async update(id: string, updateReservationDto: UpdateReservationDto) {
-    await this.findOne(id);
+  async findByStatus(status: Status) {
+    const reservations = await this.reservationRepository
+      .createQueryBuilder('reservation')
+      .where('reservation.status = :status', { status })
+      .getMany();
 
-    const propsToUpdate = getPropsToUpdate(updateReservationDto);
-
-    await this.reservationRepository.update(id, propsToUpdate);
-
-    return await this.findOne(id);
+    return reservations;
   }
 
-  async unoccupy(id: string, unoccupyReservationDto: UnoccupyReservationDto) {
-    const { reservation } = await this.findOne(id);
+  async checkExpiredReservationsAndUpdateStatus() {
+    const pendingReservations = await this.findByStatus(Status.pending);
 
-    const { actualExitTime, isPaid } = unoccupyReservationDto;
+    if (pendingReservations.length === 0) return;
 
-    await this.reservationRepository.update(reservation.id, {
-      actual_exit_time: actualExitTime,
-      is_paid: isPaid,
+    pendingReservations.forEach(async (reservation) => {
+      const now = new Date();
+      const reservationTime = new Date(reservation.booking_date);
+      const diffInMinutes = Math.floor((now.getTime() - reservationTime.getTime()) / (1000 * 60));
+
+      if (diffInMinutes >= 10) {
+        await this.update(reservation.id, { status: Status.expired });
+      }
     });
-
-    return await this.findOne(id);
   }
 
   private async verifyIfSlotIsReserved(options: {

@@ -7,60 +7,55 @@ export class UpdateReservationDto {
   @MaxLength(10)
   @IsEnum(Status)
   @IsString()
-  status: string;
+  status?: string;
 
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
-  durationInMinutes: number;
+  durationInMinutes?: number;
 
   @IsOptional()
   @IsString()
   @MaxLength(100)
-  entryTime: string;
+  entryTime?: string;
 
   @IsOptional()
   @IsString()
   @MaxLength(100)
-  exitTime: string;
+  exitTime?: string;
 
   @IsOptional()
   @IsString()
   @MaxLength(100)
-  actualEntryTime: string;
+  actualEntryTime?: string;
 
   @IsOptional()
   @IsString()
   @MaxLength(100)
-  actualExitTime: string;
+  actualExitTime?: string;
 
   @IsOptional()
   @Type(() => Number)
   @IsNumber({ allowNaN: false, maxDecimalPlaces: 2 })
-  basicCost: number;
+  basicCost?: number;
 
   @IsOptional()
   @Type(() => Number)
   @IsNumber({ allowNaN: false, maxDecimalPlaces: 2 })
-  penalty: number;
+  penalty?: number;
 
   @IsOptional()
   @Type(() => Number)
   @IsNumber({ allowNaN: false, maxDecimalPlaces: 2 })
-  totalCoast: number;
+  totalCoast?: number;
 
   @IsOptional()
   @IsString()
   @IsBoolean()
-  isPaid: string;
+  isPaid?: string;
 
   @IsOptional()
   @IsString()
   @MaxLength(100)
-  bookingDate: string;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(100)
-  slotCode: string;
+  bookingDate?: string;
 }

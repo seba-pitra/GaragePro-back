@@ -35,7 +35,7 @@ export class ParkingController {
   @Get(':id')
   @Auth(ValidRoles.admin)
   findOne(@Param('id') id: string) {
-    return this.parkingService.findOne(id);
+    return this.parkingService.findOneReservationSlot(id);
   }
 
   @Patch('/:id')
