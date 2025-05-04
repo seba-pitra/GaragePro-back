@@ -119,5 +119,10 @@ export const createReservationData = async (datasource: DataSource) => {
 
   const reservationSlotResult = resultReservationSlot.raw[0];
 
-  return reservationSlotResult;
+  return {
+    reservationSlot: reservationSlotResult,
+    reservation,
+    user,
+    slot: parkingSlot,
+  };
 };
