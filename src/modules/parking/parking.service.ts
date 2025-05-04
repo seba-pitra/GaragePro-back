@@ -10,6 +10,8 @@ import { ParkingSlotsService } from '../parking-slots/parking-slots.service';
 import { PaginationDto } from '@/common/dtos/pagination.dto';
 import { UnoccupyReservationDto } from './dto/unoccupy-reservation.dto';
 import { CreateTotalCostDto } from './dto/create-total-cost.dto';
+import { UpdateReservationDto } from './dto/update-reservation.dto';
+import { getPropsToUpdate } from '@/utils/getPropsToUpdate';
 
 @Injectable()
 export class ParkingService {
@@ -58,7 +60,7 @@ export class ParkingService {
   private async createReservation(user: User, createReservationDto: CreateReservationDto) {
     const { entryTime, exitTime, basicCost, durationInMinutes } = createReservationDto;
 
-    // 1. Verify that the entry and exit time are valid dates
+    // Verify that the entry and exit time are valid dates
     const areValidDates =
       !entryTime ||
       !exitTime ||
@@ -67,7 +69,7 @@ export class ParkingService {
 
     if (areValidDates) throw new BadRequestException('Invalid entry or exit time');
 
-    // 2. Verify that the entry and exit time are greater than the current date
+    // Verify that the entry and exit time are greater than the current date
     const currentDate = new Date();
     const entryDate = new Date(entryTime);
     const exitDate = new Date(exitTime);
@@ -76,14 +78,14 @@ export class ParkingService {
       throw new BadRequestException('Entry and exit time must be greater than current date');
     }
 
-    // 3. Lookup if there is already a reservation in that slot for the selected time
+    // Lookup if there is already a reservation in that slot for the selected time
     await this.verifyIfSlotIsReserved({
       slotCode: createReservationDto.slotCode,
       entryTime: entryTime,
       exitTime: exitTime,
     });
 
-    // 4. Create the reservation and return it
+    // Create the reservation and return it
     const newReservation = this.reservationRepository.create({
       entry_time: entryTime,
       exit_time: exitTime,
@@ -123,6 +125,16 @@ export class ParkingService {
     if (!reservation) throw new NotFoundException('Reservation not found');
 
     return reservation;
+  }
+
+  async update(id: string, updateReservationDto: UpdateReservationDto) {
+    await this.findOne(id);
+
+    const propsToUpdate = getPropsToUpdate(updateReservationDto);
+
+    await this.reservationRepository.update(id, propsToUpdate);
+
+    return await this.findOne(id);
   }
 
   async unoccupy(id: string, unoccupyReservationDto: UnoccupyReservationDto) {

@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { CreateParkingSlotDto } from './dto/create-parking-slot.dto';
 import { UpdateParkingSlotDto } from './dto/update-parking-slot.dto';
 import { ParkingSlot } from './entities/parking-slot.entity';
+import { getPropsToUpdate } from '@/utils/getPropsToUpdate';
 
 @Injectable()
 export class ParkingSlotsService {
@@ -46,7 +47,7 @@ export class ParkingSlotsService {
   async update(criteria: Partial<ParkingSlot>, updateParkingSlotDto: UpdateParkingSlotDto) {
     await this.findOne(criteria);
 
-    const updateData = this.getPropsToUpdate(updateParkingSlotDto);
+    const updateData = getPropsToUpdate(updateParkingSlotDto);
 
     await this.parkingSlotRepository.update(criteria, updateData);
 
@@ -57,15 +58,5 @@ export class ParkingSlotsService {
 
   remove(id: number) {
     return `This action removes a #${id} parkingSlot`;
-  }
-
-  private getPropsToUpdate(data: UpdateParkingSlotDto): Partial<ParkingSlot> {
-    const updateData: Partial<ParkingSlot> = {};
-
-    if (data.slotCode) {
-      updateData.slot_code = data.slotCode;
-    }
-
-    return updateData;
   }
 }
