@@ -11,7 +11,7 @@ import { PaginationDto } from '@/common/dtos/pagination.dto';
 import { UnoccupyReservationDto } from './dto/unoccupy-reservation.dto';
 import { CreateTotalCostDto } from './dto/create-total-cost.dto';
 import { UpdateReservationDto } from './dto/update-reservation.dto';
-import { getPropsToUpdate } from '@/utils/getPropsToUpdate';
+import { getPropsToDatabase } from '@/utils/getPropsToDatabase';
 import { Status } from './interfaces/reservation.interface';
 
 @Injectable()
@@ -102,7 +102,7 @@ export class ParkingService {
   async update(id: string, updateReservationDto: UpdateReservationDto) {
     await this.findOneReservation(id);
 
-    const propsToUpdate = getPropsToUpdate(updateReservationDto);
+    const propsToUpdate = getPropsToDatabase(updateReservationDto);
 
     await this.reservationRepository.update(id, propsToUpdate);
 

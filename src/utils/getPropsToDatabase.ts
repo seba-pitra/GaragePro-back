@@ -1,4 +1,4 @@
-export function getPropsToUpdate(object: { [key: string]: any }) {
+export function getPropsToDatabase(object: { [key: string]: any }): { [key: string]: any } {
   const propsToUpdate = {} as any;
 
   for (const [key, value] of Object.entries(object)) {

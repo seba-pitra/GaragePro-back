@@ -14,7 +14,7 @@ import { User } from './entities/user.entity';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { comparePasswords, encryptPassword } from '@/utils/encrypt';
 import { PaginationDto } from '@/common/dtos/pagination.dto';
-import { getPropsToUpdate } from '@/utils/getPropsToUpdate';
+import { getPropsToDatabase } from '@/utils/getPropsToDatabase';
 
 @Injectable()
 export class UserService {
@@ -34,7 +34,9 @@ export class UserService {
     let { password } = createUserDto;
     password = await encryptPassword(password);
 
-    const newUser = this.userRepository.create({ ...createUserDto, password });
+    const propsToCreate = getPropsToDatabase(createUserDto);
+
+    const newUser = this.userRepository.create({ ...propsToCreate, password });
     await this.userRepository.save(newUser);
 
     delete newUser.id;
@@ -103,7 +105,7 @@ export class UserService {
     if (!user) throw new NotFoundException(`User not found with email: ${email}`);
     const { id } = user;
 
-    const propsToUpdate = getPropsToUpdate(updateUserDto);
+    const propsToUpdate = getPropsToDatabase(updateUserDto);
 
     if (propsToUpdate.password) {
       propsToUpdate.password = await encryptPassword(propsToUpdate.password);
