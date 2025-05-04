@@ -250,7 +250,7 @@ describe('User Service', () => {
       lastName: 'test_updated',
     };
 
-    const updatedUser = await service.update(user.email, updateUserDto);
+    const { user: updatedUser } = await service.update(user.email, updateUserDto);
 
     expect(updatedUser.first_name).toBe(updateUserDto.firstName);
     expect(updatedUser.last_name).toBe(updateUserDto.lastName);
