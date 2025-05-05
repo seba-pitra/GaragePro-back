@@ -15,6 +15,7 @@ import { ParkingSlot } from '@/modules/parking-slots/entities/parking-slot.entit
 import { ReservationSlot } from '@/modules/parking/entities/reservation-slot.entity';
 import { Reservation } from '@/modules/parking/entities/reservation.entity';
 import { User } from '@/modules/users/entities/user.entity';
+import { JwtModule } from '@nestjs/jwt';
 
 describe('Vehicle Service', () => {
   let service: VehiclesService;
@@ -33,6 +34,14 @@ describe('Vehicle Service', () => {
         ConfigModule.forRoot({
           envFilePath: '.env.test',
           isGlobal: true,
+        }),
+        JwtModule.registerAsync({
+          imports: [ConfigModule],
+          inject: [ConfigService],
+          useFactory: () => {
+            const jwtSecret = 'test';
+            return { secret: jwtSecret, signOptions: { expiresIn: '2h' } };
+          },
         }),
         TypeOrmModule.forRootAsync({
           imports: [ConfigModule],
@@ -93,13 +102,28 @@ describe('Vehicle Service', () => {
       userId: newUser.id,
     };
 
-    const newVehicle = await service.create(createvehicleDto);
+    const newVehicle = await service.create(newUser, createvehicleDto);
 
     expect(newVehicle).toHaveProperty('vehicle');
   });
 
   it('create should throw an error if user does not exist', async () => {
     try {
+      const fakeUser: User = {
+        id: '123bae1e-596f-43fd-9909-6a65ed3f5298',
+        is_active: true,
+        is_regular_customer: false,
+        roles: ['customer'],
+        created_at: new Date(),
+        checkFieldBeforeInsert: () => {},
+        checkFieldBeforeUpdate: () => {},
+        first_name: 'test_user',
+        last_name: 'test_lastnma',
+        email: 'testMail01@gmail.com',
+        password: 'testPassword1',
+        phone: '1111611111',
+      };
+
       const createVehicleDto: CreateVehicleDto = {
         plateNumber: 'AA GBC 13',
         model: 'Toyota Corolla',
@@ -107,7 +131,7 @@ describe('Vehicle Service', () => {
         userId: '123bae1e-596f-43fd-9909-6a65ed3f5298',
       };
 
-      await service.create(createVehicleDto);
+      await service.create(fakeUser, createVehicleDto);
       expect(true).toBeFalsy();
     } catch (error) {
       expect(error).toBeInstanceOf(NotFoundException);
@@ -129,7 +153,7 @@ describe('Vehicle Service', () => {
         userId: user.id,
       };
 
-      await service.create(createVehicleDto);
+      await service.create(user, createVehicleDto);
       expect(true).toBeFalsy();
     } catch (error) {
       expect(error).toBeInstanceOf(BadRequestException);
