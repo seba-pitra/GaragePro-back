@@ -18,11 +18,11 @@ export class VehiclesService {
     private readonly userRepository: Repository<User>,
   ) {}
 
-  async create(createVehicleDto: CreateVehicleDto) {
-    const { userId, plateNumber } = createVehicleDto;
+  async create(user: User, createVehicleDto: CreateVehicleDto) {
+    const { plateNumber } = createVehicleDto;
 
-    const user = await this.userRepository.findOneBy({ id: userId });
-    if (!user) throw new NotFoundException('User not found');
+    const foundUser = await this.userRepository.findOneBy({ id: user.id });
+    if (!foundUser) throw new NotFoundException('User not found');
 
     const foundVehicle = await this.vehicleRepository.findOneBy({ plate_number: plateNumber });
     if (foundVehicle) {
@@ -32,7 +32,7 @@ export class VehiclesService {
     const newVehicle = this.vehicleRepository.create({
       ...createVehicleDto,
       plate_number: plateNumber,
-      user: user,
+      user: foundUser,
     });
     await this.vehicleRepository.save(newVehicle);
 

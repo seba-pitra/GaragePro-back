@@ -6,6 +6,7 @@ import { VehiclesService } from '@/modules/vehicles/vehicles.service';
 import { CreateVehicleDto } from '@/modules/vehicles/dto/create-vehicle.dto';
 import { PaginationDto } from '@/common/dtos/pagination.dto';
 import { UpdateVehicleDto } from '@/modules/vehicles/dto/update-vehicle.dto';
+import { User } from '@/modules/users/entities/user.entity';
 
 jest.mock('@nestjs/passport', () => ({
   ...jest.requireActual('@nestjs/passport'),
@@ -54,16 +55,31 @@ describe('Vehicle Controller', () => {
   });
 
   it('create method should call service', async () => {
+    const user: User = {
+      id: '123bae1e-596f-43fd-9909-6a65ed3f5298',
+      is_active: true,
+      is_regular_customer: false,
+      roles: ['customer'],
+      created_at: new Date(),
+      checkFieldBeforeInsert: () => {},
+      checkFieldBeforeUpdate: () => {},
+      first_name: 'test_user',
+      last_name: 'test_lastnma',
+      email: 'testMail01@gmail.com',
+      password: 'testPassword1',
+      phone: '1111611111',
+    };
+
     const createVehicleDto: CreateVehicleDto = {
       color: 'White',
       model: 'Peugeot 2008',
       plateNumber: 'AD 452 DFG',
       userId: '123bae1e-596f-43fd-9909-6a65ed3f5298',
     };
-    await controller.create(createVehicleDto);
+    await controller.create(user, createVehicleDto);
 
     expect(mockVehiclesService.create).toHaveBeenCalledTimes(1);
-    expect(mockVehiclesService.create).toHaveBeenCalledWith(createVehicleDto);
+    expect(mockVehiclesService.create).toHaveBeenCalledWith(user, createVehicleDto);
   });
 
   it('findAll method should call service', async () => {

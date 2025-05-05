@@ -1,7 +1,7 @@
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ExecutionContext, NotFoundException } from '@nestjs/common';
 
 import { createTestDatabase } from '../../../database/init';
 import { createReservationData, createUserData } from '../../../database/create-data';
@@ -20,6 +20,13 @@ import { Vehicle } from '@/modules/vehicles/entities/vehicle.entity';
 import { User } from '@/modules/users/entities/user.entity';
 import { UpdateReservationDto } from '@/modules/parking/dto/update-reservation.dto';
 import { Status } from '@/modules/parking/interfaces/reservation.interface';
+
+jest.mock('@nestjs/passport', () => ({
+  ...jest.requireActual('@nestjs/passport'),
+  AuthGuard: jest.fn(() => ({
+    canActivate: jest.fn((context: ExecutionContext) => true),
+  })),
+}));
 
 describe('Parking Service', () => {
   let parkingService: ParkingService;
