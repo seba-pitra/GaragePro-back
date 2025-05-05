@@ -22,25 +22,25 @@ export class UserController {
   }
 
   @Get('/')
-  @Auth(ValidRoles.employee, ValidRoles.admin)
+  @Auth(ValidRoles.employee, ValidRoles.employee, ValidRoles.admin)
   findAll(@Query() paginationDto: PaginationDto) {
     return this.userService.findAll(paginationDto);
   }
 
   @Get('/:email')
-  @Auth(ValidRoles.employee, ValidRoles.admin)
+  @Auth(ValidRoles.customer, ValidRoles.employee, ValidRoles.admin)
   findOneByEmail(@Param('email') email: string) {
     return this.userService.findOneByEmail(email);
   }
 
   @Patch('/:email')
-  @Auth(ValidRoles.employee, ValidRoles.admin)
+  @Auth(ValidRoles.customer, ValidRoles.employee, ValidRoles.admin)
   update(@Param('email') email: string, @Body() updateUserDto: UpdateUserDto) {
     return this.userService.update(email, updateUserDto);
   }
 
   @Delete('/:email')
-  @Auth(ValidRoles.employee, ValidRoles.admin)
+  @Auth(ValidRoles.admin)
   delete(@Param('email') email: string) {
     return this.userService.delete(email);
   }

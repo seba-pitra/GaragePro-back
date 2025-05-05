@@ -15,25 +15,25 @@ export class ParkingController {
   constructor(private readonly parkingService: ParkingService) {}
 
   @Post('/reserve')
-  @Auth(ValidRoles.customer, ValidRoles.admin)
+  @Auth(ValidRoles.customer, ValidRoles.employee, ValidRoles.admin)
   reserve(@GetUser() user: User, @Body() createReservationDto: CreateReservationDto) {
     return this.parkingService.reserve(user, createReservationDto);
   }
 
   @Post('/create-total-cost/:id')
-  @Auth(ValidRoles.employee, ValidRoles.admin)
+  @Auth(ValidRoles.employee, ValidRoles.employee, ValidRoles.admin)
   createTotalCost(@Param('id') id: string, @Body() createTotalCostDto: CreateTotalCostDto) {
     return this.parkingService.createTotalCost(id, createTotalCostDto);
   }
 
   @Get()
-  @Auth(ValidRoles.admin)
+  @Auth(ValidRoles.employee, ValidRoles.admin)
   findAll(@Query() paginationDto: PaginationDto) {
     return this.parkingService.findAll(paginationDto);
   }
 
   @Get(':id')
-  @Auth(ValidRoles.admin)
+  @Auth(ValidRoles.customer, ValidRoles.employee, ValidRoles.admin)
   findOne(@Param('id') id: string) {
     return this.parkingService.findOneReservationSlot(id);
   }
