@@ -96,9 +96,7 @@ describe('User Service', () => {
       first_name: 'test',
       last_name: 'test',
       email: 'test10@gmail.com',
-      phone: '1111111111',
       roles: ['customer'],
-      is_active: true,
       is_regular_customer: false,
     });
   });
