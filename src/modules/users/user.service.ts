@@ -41,6 +41,8 @@ export class UserService {
 
     delete newUser.id;
     delete newUser.password;
+    delete newUser.phone;
+    delete newUser.is_active;
     delete newUser.created_at;
 
     return {
@@ -54,7 +56,14 @@ export class UserService {
 
     const user = await this.userRepository.findOne({
       where: { email },
-      select: { email: true, password: true },
+      select: {
+        email: true,
+        password: true,
+        roles: true,
+        first_name: true,
+        last_name: true,
+        is_regular_customer: true,
+      },
     });
     if (!user) throw new NotFoundException(`User not found with email: ${email}`);
 

@@ -118,10 +118,8 @@ describe('Users (e2e)', () => {
       user: {
         email: createUserDto.email,
         first_name: createUserDto.firstName,
-        is_active: true,
         is_regular_customer: false,
         last_name: createUserDto.lastName,
-        phone: createUserDto.phone,
         roles: ['customer'],
       },
     });
@@ -176,6 +174,10 @@ describe('Users (e2e)', () => {
         token: expect.any(String),
         user: {
           email: loginUserDto.email,
+          first_name: user.first_name,
+          is_regular_customer: user.is_regular_customer,
+          last_name: user.last_name,
+          roles: user.roles,
         },
       },
     });
