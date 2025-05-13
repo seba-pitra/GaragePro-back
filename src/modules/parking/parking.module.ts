@@ -8,9 +8,11 @@ import { ReservationSlot } from './entities/reservation-slot.entity';
 import { ParkingSlotsModule } from '../parking-slots/parking-slots.module';
 import { UserModule } from '../users/user.module';
 import { User } from '../users/entities/user.entity';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
+    ConfigModule,
     TypeOrmModule.forFeature([Reservation, ReservationSlot, User]),
     UserModule,
     ParkingSlotsModule,

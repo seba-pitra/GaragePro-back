@@ -13,9 +13,12 @@ import { CreateTotalCostDto } from './dto/create-total-cost.dto';
 import { UpdateReservationDto } from './dto/update-reservation.dto';
 import { getPropsToDatabase } from '@/utils/getPropsToDatabase';
 import { Status } from './interfaces/reservation.interface';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class ParkingService {
+  private readonly pricePerHour: number;
+
   constructor(
     @InjectRepository(Reservation)
     private readonly reservationRepository: Repository<Reservation>,
@@ -24,7 +27,11 @@ export class ParkingService {
     private readonly reservationSlotRepository: Repository<ReservationSlot>,
 
     private readonly parkingSlotService: ParkingSlotsService,
-  ) {}
+
+    private readonly configService: ConfigService,
+  ) {
+    this.pricePerHour = this.configService.get('pricePerHour');
+  }
 
   async reserve(user: User, createReservationDto: CreateReservationDto) {
     const { slotCode } = createReservationDto;
@@ -59,7 +66,7 @@ export class ParkingService {
   }
 
   private async createReservation(user: User, createReservationDto: CreateReservationDto) {
-    const { entryTime, exitTime, basicCost, durationInMinutes } = createReservationDto;
+    const { entryTime, exitTime } = createReservationDto;
 
     // Verify that the entry and exit time are valid dates
     const areValidDates =
@@ -85,6 +92,11 @@ export class ParkingService {
       entryTime: entryTime,
       exitTime: exitTime,
     });
+
+    // TODO: calculate basic cost
+
+    const basicCost = this.getBasicCost(entryDate, exitDate);
+    const durationInMinutes = this.getDurationInMinutes(entryDate, exitDate);
 
     // Create the reservation and return it
     const newReservation = this.reservationRepository.create({
@@ -170,6 +182,18 @@ export class ParkingService {
     return reservations;
   }
 
+  getBasicCost(entryDate: Date, exitDate: Date) {
+    const durationInMinutes = this.getDurationInMinutes(entryDate, exitDate);
+
+    const durationHours = durationInMinutes / (1000 * 60 * 60);
+
+    const hoursToCharge = Math.ceil(durationHours);
+
+    const totalCost = hoursToCharge * this.pricePerHour;
+
+    return totalCost;
+  }
+
   async checkExpiredReservationsAndUpdateStatus() {
     const pendingReservations = await this.findByStatus(Status.pending);
 
@@ -226,8 +250,7 @@ export class ParkingService {
       throw new BadRequestException('Invalid date format');
     }
 
-    const timeUsedMs = actualExitDate.getTime() - actualEntryDate.getTime();
-    const timeUsedMinutes = Math.floor(timeUsedMs / (1000 * 60));
+    const timeUsedMinutes = this.getDurationInMinutes(actualEntryDate, actualExitDate);
 
     if (timeUsedMinutes === durationInMinutes || timeUsedMinutes < durationInMinutes) {
       totalCost = basicCost;
@@ -240,5 +263,12 @@ export class ParkingService {
     totalCost = +(Number(basicCost) + totalPenaltyCost).toFixed(2);
 
     return { basicCost, totalCost, penaltyCost: totalPenaltyCost, extraTimeUsedMinutes };
+  }
+
+  private getDurationInMinutes(entryDate: Date, exitDate: Date) {
+    const diffInMs = Math.abs(exitDate.getTime() - entryDate.getTime());
+
+    const totalMinutes = Math.floor(diffInMs / (1000 * 60));
+    return totalMinutes;
   }
 }
