@@ -30,7 +30,7 @@ export class ParkingService {
 
     private readonly configService: ConfigService,
   ) {
-    this.pricePerHour = configService.get('pricePerHour');
+    this.pricePerHour = this.configService.get('pricePerHour');
   }
 
   async reserve(user: User, createReservationDto: CreateReservationDto) {
@@ -183,13 +183,14 @@ export class ParkingService {
   }
 
   getBasicCost(entryDate: Date, exitDate: Date) {
-    const timeUsedMinutes = this.getDurationInMinutes(entryDate, exitDate);
+    const durationInMinutes = this.getDurationInMinutes(entryDate, exitDate);
 
-    const durationHours = timeUsedMinutes / (1000 * 60 * 60);
+    const durationHours = durationInMinutes / (1000 * 60 * 60);
 
     const hoursToCharge = Math.ceil(durationHours);
 
     const totalCost = hoursToCharge * this.pricePerHour;
+
     return totalCost;
   }
 
@@ -266,6 +267,7 @@ export class ParkingService {
 
   private getDurationInMinutes(entryDate: Date, exitDate: Date) {
     const diffInMs = Math.abs(exitDate.getTime() - entryDate.getTime());
+
     const totalMinutes = Math.floor(diffInMs / (1000 * 60));
     return totalMinutes;
   }

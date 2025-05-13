@@ -103,12 +103,15 @@ describe('Parking (e2e)', () => {
     const createParkingSlotDto = { slotCode: 'A3' };
     const parkingSlot = await createParkingSlotData(dataSource, createParkingSlotDto);
 
+    const entry = new Date();
+    entry.setSeconds(entry.getSeconds() + 10);
+    const exit = new Date(entry);
+    exit.setHours(exit.getHours() + 1);
+
     const createReservationDto: CreateReservationDto = {
-      durationInMinutes: 10,
-      entryTime: new Date(new Date().getTime() + 10000).toISOString(),
-      exitTime: new Date(new Date().getTime() + 60000).toISOString(),
+      entryTime: entry.toISOString(),
+      exitTime: exit.toISOString(),
       slotCode: parkingSlot.slot_code,
-      basicCost: 30.33,
     };
 
     const { body } = await request(app.getHttpServer())
@@ -157,12 +160,15 @@ describe('Parking (e2e)', () => {
 
     const parkingSlot = await createParkingSlotData(dataSource, createParkingSlotDto);
 
+    const entry = new Date();
+    entry.setSeconds(entry.getSeconds() + 10);
+    const exit = new Date(entry);
+    exit.setHours(exit.getHours() + 1);
+
     const createReservationDto: CreateReservationDto = {
-      durationInMinutes: 10,
-      entryTime: new Date(new Date().getTime() + 10000).toISOString(),
-      exitTime: new Date(new Date().getTime() + 60000).toISOString(),
+      entryTime: entry.toISOString(),
+      exitTime: exit.toISOString(),
       slotCode: parkingSlot.slot_code,
-      basicCost: 30.33,
     };
 
     await request(app.getHttpServer())
@@ -191,11 +197,9 @@ describe('Parking (e2e)', () => {
 
   it('/POST /parking/reserve should throw an error if parking slot does not exist', async () => {
     const createReservationDto: CreateReservationDto = {
-      durationInMinutes: 10,
       entryTime: new Date(new Date().getTime() + 10000).toISOString(),
       exitTime: new Date(new Date().getTime() + 60000).toISOString(),
       slotCode: 'fake',
-      basicCost: 30.33,
     };
 
     const { body } = await request(app.getHttpServer())

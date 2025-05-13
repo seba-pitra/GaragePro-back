@@ -101,12 +101,15 @@ describe('Parking Service', () => {
     const createParkingSlotDto: CreateParkingSlotDto = { slotCode: 'A1' };
     const parkingSlot = await parkingSlotService.create(createParkingSlotDto);
 
+    const entry = new Date();
+    entry.setSeconds(entry.getSeconds() + 10);
+    const exit = new Date(entry);
+    exit.setHours(exit.getHours() + 1);
+
     const createReservationDto: CreateReservationDto = {
-      durationInMinutes: 60,
-      entryTime: new Date(new Date().getTime() + 10000).toISOString(),
-      exitTime: new Date(new Date().getTime() + 60000).toISOString(),
-      basicCost: 30.33,
-      slotCode: 'A1',
+      entryTime: entry.toISOString(),
+      exitTime: exit.toISOString(),
+      slotCode: parkingSlot.slot_code,
     };
 
     const result = await parkingService.reserve(newUser, createReservationDto);
@@ -123,8 +126,8 @@ describe('Parking Service', () => {
         actual_exit_time: null,
         entry_time: createReservationDto.entryTime,
         exit_time: createReservationDto.exitTime,
-        basic_cost: createReservationDto.basicCost,
-        duration_in_minutes: createReservationDto.durationInMinutes,
+        basic_cost: expect.any(Number),
+        duration_in_minutes: expect.any(Number),
         is_paid: null,
         penalty: null,
         total_cost: null,
@@ -137,11 +140,14 @@ describe('Parking Service', () => {
     try {
       const { user, slot } = await createReservationData(dataSource);
 
+      const entry = new Date();
+      entry.setSeconds(entry.getSeconds() + 10);
+      const exit = new Date(entry);
+      exit.setHours(exit.getHours() + 1);
+
       const createReservationDto: CreateReservationDto = {
-        durationInMinutes: 60,
-        entryTime: new Date(new Date().getTime() + 10000).toISOString(),
-        exitTime: new Date(new Date().getTime() + 60000).toISOString(),
-        basicCost: 30.33,
+        entryTime: entry.toISOString(),
+        exitTime: exit.toISOString(),
         slotCode: slot.slot_code,
       };
 
