@@ -32,6 +32,12 @@ export class ParkingController {
     return this.parkingService.findAll(paginationDto);
   }
 
+  @Get('available-times')
+  @Auth(ValidRoles.customer, ValidRoles.employee, ValidRoles.admin)
+  availableTimes(@Query('date') date: string) {
+    return this.parkingService.getAvailableTimeSlots(date);
+  }
+
   @Get(':id')
   @Auth(ValidRoles.customer, ValidRoles.employee, ValidRoles.admin)
   findOne(@Param('id') id: string) {

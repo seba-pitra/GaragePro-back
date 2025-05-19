@@ -42,7 +42,7 @@ export class ParkingService {
 
     const reservationSlot = new ReservationSlot();
     reservationSlot.reservation = reservation;
-    reservationSlot.parking_slot = parkingSlot;
+    reservationSlot.parking_slot = parkingSlot.slot;
 
     const newReservation = await this.reservationSlotRepository.save(reservationSlot);
 
@@ -93,8 +93,6 @@ export class ParkingService {
       exitTime: exitTime,
     });
 
-    // TODO: calculate basic cost
-
     const basicCost = this.getBasicCost(entryDate, exitDate);
     const durationInMinutes = this.getDurationInMinutes(entryDate, exitDate);
 
@@ -134,6 +132,45 @@ export class ParkingService {
     });
 
     return await this.findOneReservationSlot(id);
+  }
+
+  async getAvailableTimeSlots(date: string): Promise<{ start: string; end: string }[]> {
+    const openingHour = 8;
+    const closingHour = 18;
+    const slotDuration = 30;
+
+    console.log('hola mundo');
+    const slots: { start: string; end: string }[] = [];
+    for (let hour = openingHour; hour < closingHour; hour++) {
+      for (let minute = 0; minute < 60; minute += slotDuration) {
+        const start = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+        let endHour = hour;
+        let endMinute = minute + slotDuration;
+        if (endMinute >= 60) {
+          endHour += 1;
+          endMinute -= 60;
+        }
+        const end = `${endHour.toString().padStart(2, '0')}:${endMinute
+          .toString()
+          .padStart(2, '0')}`;
+        slots.push({ start, end });
+      }
+    }
+
+    const reservations = await this.reservationRepository
+      .createQueryBuilder('reservation')
+      .where('DATE(reservation.entry_time) = :date', { date })
+      .getMany();
+
+    const availableSlots = slots.filter((slot) => {
+      const slotStart = new Date(`${date}T${slot.start}:00`);
+      const slotEnd = new Date(`${date}T${slot.end}:00`);
+      return !reservations.some((reservation) => {
+        return slotStart < reservation.exit_time && slotEnd > reservation.entry_time;
+      });
+    });
+
+    return availableSlots;
   }
 
   async findAll(paginationDto: PaginationDto) {
