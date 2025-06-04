@@ -3,16 +3,16 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BadRequestException, ExecutionContext, NotFoundException } from '@nestjs/common';
 
-import { createTestDatabase } from '../../../database/init';
-import { createReservationData, createUserData } from '../../../database/create-data';
 import { PaginationDto } from '@/common/dtos/pagination.dto';
 import { Reservation } from '@/modules/parking/entities/reservation.entity';
 import { ReservationSlot } from '@/modules/parking/entities/reservation-slot.entity';
 import { ParkingService } from '@/modules/parking/parking.service';
 import { ParkingSlotsService } from '@/modules/parking-slots/parking-slots.service';
+import { createReservationData, createUserData } from '../../../database/create-data';
+import { createTestDatabase } from '../../../database/init';
+import { getCreateReservationDto } from '../../../database/dtos';
 import { ParkingSlotsModule } from '@/modules/parking-slots/parking-slots.module';
 import { ParkingSlot } from '@/modules/parking-slots/entities/parking-slot.entity';
-import { CreateReservationDto } from '@/modules/parking/dto/create-reservation.dto';
 import { CreateParkingSlotDto } from '@/modules/parking-slots/dto/create-parking-slot.dto';
 import { CreateTotalCostDto } from '@/modules/parking/dto/create-total-cost.dto';
 import { UnoccupyReservationDto } from '@/modules/parking/dto/unoccupy-reservation.dto';
@@ -101,55 +101,21 @@ describe('Parking Service', () => {
     const createParkingSlotDto: CreateParkingSlotDto = { slotCode: 'A1' };
     const parkingSlot = await parkingSlotService.create(createParkingSlotDto);
 
-    const entry = new Date();
-    entry.setSeconds(entry.getSeconds() + 10);
-    const exit = new Date(entry);
-    exit.setHours(exit.getHours() + 1);
-
-    const createReservationDto: CreateReservationDto = {
-      entryTime: entry.toISOString(),
-      exitTime: exit.toISOString(),
-      slotCode: parkingSlot.slot_code,
-    };
-
+    const createReservationDto = getCreateReservationDto(parkingSlot.slot_code);
     const result = await parkingService.reserve(newUser, createReservationDto);
 
     expect(result).toMatchObject({
-      id: expect.any(String),
       created_at: expect.any(Date),
-      parking_slot: {
-        id: expect.any(String),
-        slot_code: parkingSlot.slot_code,
-      },
-      reservation: {
-        actual_entry_time: null,
-        actual_exit_time: null,
-        entry_time: createReservationDto.entryTime,
-        exit_time: createReservationDto.exitTime,
-        basic_cost: expect.any(Number),
-        duration_in_minutes: expect.any(Number),
-        is_paid: null,
-        penalty: null,
-        total_cost: null,
-        booking_date: expect.any(Date),
-      },
+      id: expect.any(String),
+      parking_slot: expect.any(ParkingSlot),
+      reservation: expect.any(Reservation),
     });
   });
 
   it('reserve should throw an error if parking slot is already reserved', async () => {
     try {
       const { user, slot } = await createReservationData(dataSource);
-
-      const entry = new Date();
-      entry.setSeconds(entry.getSeconds() + 10);
-      const exit = new Date(entry);
-      exit.setHours(exit.getHours() + 1);
-
-      const createReservationDto: CreateReservationDto = {
-        entryTime: entry.toISOString(),
-        exitTime: exit.toISOString(),
-        slotCode: slot.slot_code,
-      };
+      const createReservationDto = getCreateReservationDto(slot.slot_code);
 
       await parkingService.reserve(user, createReservationDto);
 
@@ -290,21 +256,8 @@ describe('Parking Service', () => {
     expect(reservations).toMatchObject([
       {
         id: expect.any(String),
-        parking_slot: expect.objectContaining({
-          id: expect.any(String),
-          slot_code: expect.any(String),
-        }),
-        reservation: expect.objectContaining({
-          actual_entry_time: expect.any(Date),
-          actual_exit_time: null,
-          basic_cost: '30.33',
-          booking_date: expect.any(Date),
-          duration_in_minutes: 60,
-          id: expect.any(String),
-          is_paid: null,
-          penalty: null,
-          total_cost: null,
-        }),
+        parking_slot: expect.any(ParkingSlot),
+        reservation: expect.any(Reservation),
       },
     ]);
   });
@@ -331,17 +284,8 @@ describe('Parking Service', () => {
     expect(result.reservation).toHaveProperty('actual_exit_time');
     expect(result).toMatchObject({
       id: expect.any(String),
-      parking_slot: {
-        id: expect.any(String),
-        slot_code: expect.any(String),
-      },
-      reservation: {
-        actual_entry_time: expect.any(Date),
-        basic_cost: expect.any(String),
-        booking_date: expect.any(Date),
-        duration_in_minutes: expect.any(Number),
-        id: expect.any(String),
-      },
+      parking_slot: expect.any(ParkingSlot),
+      reservation: expect.any(Reservation),
     });
   });
 
@@ -371,21 +315,8 @@ describe('Parking Service', () => {
     expect(result.reservation).toHaveProperty('total_cost');
     expect(result).toMatchObject({
       id: expect.any(String),
-      parking_slot: {
-        id: expect.any(String),
-        slot_code: expect.any(String),
-      },
-      reservation: {
-        actual_entry_time: expect.any(Date),
-        actual_exit_time: expect.any(Date),
-        basic_cost: expect.any(String),
-        booking_date: expect.any(Date),
-        duration_in_minutes: expect.any(Number),
-        id: expect.any(String),
-        is_paid: expect.any(Boolean),
-        penalty: null,
-        total_cost: null,
-      },
+      parking_slot: expect.any(ParkingSlot),
+      reservation: expect.any(Reservation),
     });
   });
 

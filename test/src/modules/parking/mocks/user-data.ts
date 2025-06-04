@@ -1,3 +1,4 @@
+import { CreateReservationDto } from '@/modules/parking/dto/create-reservation.dto';
 import { User } from '@/modules/users/entities/user.entity';
 
 export const user: User = {
