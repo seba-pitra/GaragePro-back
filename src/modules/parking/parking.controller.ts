@@ -34,8 +34,8 @@ export class ParkingController {
 
   @Get('available-times')
   @Auth(ValidRoles.customer, ValidRoles.employee, ValidRoles.admin)
-  availableTimes(@Query('date') date: string) {
-    return this.parkingService.getAvailableTimeSlots(date);
+  availableTimes(@Query('date') date: string, @Query('slot') slot: string) {
+    return this.parkingService.getAvailableTimeSlots(date, slot);
   }
 
   @Get(':id')

@@ -1,6 +1,7 @@
 import { Repository } from 'typeorm';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { ConfigService } from '@nestjs/config';
 
 import { CreateReservationDto } from './dto/create-reservation.dto';
 import { Reservation } from './entities/reservation.entity';
@@ -13,7 +14,6 @@ import { CreateTotalCostDto } from './dto/create-total-cost.dto';
 import { UpdateReservationDto } from './dto/update-reservation.dto';
 import { getPropsToDatabase } from '@/utils/getPropsToDatabase';
 import { Status } from './interfaces/reservation.interface';
-import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class ParkingService {
@@ -66,40 +66,40 @@ export class ParkingService {
   }
 
   private async createReservation(user: User, createReservationDto: CreateReservationDto) {
-    const { entryTime, exitTime } = createReservationDto;
+    const { entryDate, exitDate, entryHour, exitHour } = createReservationDto;
 
     // Verify that the entry and exit time are valid dates
     const areValidDates =
-      !entryTime ||
-      !exitTime ||
-      isNaN(new Date(entryTime).getTime()) ||
-      isNaN(new Date(exitTime).getTime());
+      !entryDate ||
+      !exitDate ||
+      isNaN(new Date(entryDate).getTime()) ||
+      isNaN(new Date(exitDate).getTime());
 
     if (areValidDates) throw new BadRequestException('Invalid entry or exit time');
 
     // Verify that the entry and exit time are greater than the current date
     const currentDate = new Date();
-    const entryDate = new Date(entryTime);
-    const exitDate = new Date(exitTime);
+    const entryDateAux = new Date(`${entryDate}T${entryHour}`);
+    const exitDateAux = new Date(`${entryDate}T${exitHour}`);
 
-    if (entryDate < currentDate || exitDate < currentDate) {
+    if (entryDateAux < currentDate || exitDateAux < currentDate) {
       throw new BadRequestException('Entry and exit time must be greater than current date');
     }
 
     // Lookup if there is already a reservation in that slot for the selected time
     await this.verifyIfSlotIsReserved({
       slotCode: createReservationDto.slotCode,
-      entryTime: entryTime,
-      exitTime: exitTime,
+      entryTime: entryDateAux.toISOString(),
+      exitTime: exitDateAux.toISOString(),
     });
 
     const basicCost = this.getBasicCost(entryDate, exitDate);
-    const durationInMinutes = this.getDurationInMinutes(entryDate, exitDate);
+    const durationInMinutes = this.getDurationInMinutes(entryDateAux, exitDateAux);
 
     // Create the reservation and return it
     const newReservation = this.reservationRepository.create({
-      entry_time: entryTime,
-      exit_time: exitTime,
+      entry_time: entryDateAux.toISOString(),
+      exit_time: exitDateAux.toISOString(),
       basic_cost: basicCost,
       duration_in_minutes: durationInMinutes,
       user,
@@ -134,40 +134,44 @@ export class ParkingService {
     return await this.findOneReservationSlot(id);
   }
 
-  async getAvailableTimeSlots(date: string): Promise<{ start: string; end: string }[]> {
+  async getAvailableTimeSlots(date: string, slotCode: string) {
     const openingHour = 8;
     const closingHour = 18;
-    const slotDuration = 30;
 
-    console.log('hola mundo');
+    // Generate time slots for the day
     const slots: { start: string; end: string }[] = [];
     for (let hour = openingHour; hour < closingHour; hour++) {
-      for (let minute = 0; minute < 60; minute += slotDuration) {
-        const start = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-        let endHour = hour;
-        let endMinute = minute + slotDuration;
-        if (endMinute >= 60) {
-          endHour += 1;
-          endMinute -= 60;
-        }
-        const end = `${endHour.toString().padStart(2, '0')}:${endMinute
-          .toString()
-          .padStart(2, '0')}`;
-        slots.push({ start, end });
-      }
+      const startHour = hour.toString().padStart(2, '0');
+      const endHour = (hour + 1).toString().padStart(2, '0');
+      slots.push({ start: `${startHour}:00`, end: `${endHour}:00` });
     }
 
-    const reservations = await this.reservationRepository
-      .createQueryBuilder('reservation')
-      .where('DATE(reservation.entry_time) = :date', { date })
+    // Get reservations for the given slot and date
+    const reservations = await this.reservationSlotRepository
+      .createQueryBuilder('reservation_slot')
+      .innerJoinAndSelect('reservation_slot.reservation', 'reservation')
+      .innerJoin('reservation_slot.parking_slot', 'slot')
+      .where('slot.slot_code = :slotCode', { slotCode })
+      .andWhere('reservation.entry_time < :endOfDay AND reservation.exit_time > :startOfDay', {
+        startOfDay: new Date(`${date}T00:00:00`),
+        endOfDay: new Date(`${date}T23:59:59`),
+      })
       .getMany();
 
+    const reservationTimes = reservations.map((resSlot) => ({
+      entry_time: resSlot.reservation.entry_time,
+    }));
+
+    // Filter out slots that are not reserved
     const availableSlots = slots.filter((slot) => {
       const slotStart = new Date(`${date}T${slot.start}:00`);
-      const slotEnd = new Date(`${date}T${slot.end}:00`);
-      return !reservations.some((reservation) => {
-        return slotStart < reservation.exit_time && slotEnd > reservation.entry_time;
+
+      const foundReservation = reservationTimes.find((reservation) => {
+        const reservationEntryTime = new Date(reservation.entry_time);
+        return reservationEntryTime.toISOString() === slotStart.toISOString();
       });
+
+      if (!foundReservation) return true;
     });
 
     return availableSlots;
@@ -219,7 +223,9 @@ export class ParkingService {
     return reservations;
   }
 
-  getBasicCost(entryDate: Date, exitDate: Date) {
+  getBasicCost(entry: string, exit: string) {
+    const entryDate = new Date(entry);
+    const exitDate = new Date(exit);
     const durationInMinutes = this.getDurationInMinutes(entryDate, exitDate);
 
     const durationHours = durationInMinutes / (1000 * 60 * 60);
@@ -287,7 +293,10 @@ export class ParkingService {
       throw new BadRequestException('Invalid date format');
     }
 
-    const timeUsedMinutes = this.getDurationInMinutes(actualEntryDate, actualExitDate);
+    const actualEntryDateAux = new Date(actualEntryDate);
+    const actualExitDateAux = new Date(actualExitDate);
+
+    const timeUsedMinutes = this.getDurationInMinutes(actualEntryDateAux, actualExitDateAux);
 
     if (timeUsedMinutes === durationInMinutes || timeUsedMinutes < durationInMinutes) {
       totalCost = basicCost;
