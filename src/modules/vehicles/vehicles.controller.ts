@@ -24,10 +24,10 @@ export class VehiclesController {
     return this.vehiclesService.findAll(paginationDto);
   }
 
-  @Get('/user/:userId')
+  @Get('/user/:email')
   @Auth(ValidRoles.customer, ValidRoles.employee, ValidRoles.admin)
-  findByUserId(@Param('userId') userId: string, @Query() paginationDto: PaginationDto) {
-    return this.vehiclesService.findByUserId(userId, paginationDto);
+  findByUserId(@Param('email') email: string, @Query() paginationDto: PaginationDto) {
+    return this.vehiclesService.findByUserEmail(email, paginationDto);
   }
 
   @Get(':id')
@@ -42,9 +42,9 @@ export class VehiclesController {
     return this.vehiclesService.update(id, updateVehicleDto);
   }
 
-  @Delete(':id')
+  @Delete(':plateNumber')
   @Auth(ValidRoles.customer, ValidRoles.admin)
-  remove(@Param('id') id: string) {
-    return this.vehiclesService.remove(id);
+  remove(@Param('plateNumber') plateNumber: string) {
+    return this.vehiclesService.remove(plateNumber);
   }
 }

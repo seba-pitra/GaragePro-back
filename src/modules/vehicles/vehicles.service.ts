@@ -38,8 +38,9 @@ export class VehiclesService {
 
     delete newVehicle.user;
     delete newVehicle.id;
+    delete newVehicle.created_at;
 
-    return { vehicle: newVehicle };
+    return { vehicles: newVehicle };
   }
 
   async findAll(paginationDto: PaginationDto) {
@@ -49,19 +50,29 @@ export class VehiclesService {
 
     if (!vehicles.length) throw new NotFoundException('Vehicles not found');
 
+    for (const vehicle of vehicles) {
+      delete vehicle.id;
+      delete vehicle.created_at;
+    }
+
     return { vehicles };
   }
 
-  async findByUserId(userId: string, paginationDto: PaginationDto) {
+  async findByUserEmail(email: string, paginationDto: PaginationDto) {
     const { limit = 10, offset = 0 } = paginationDto;
 
     const vehicles = await this.vehicleRepository.find({
       skip: offset,
       take: limit,
-      where: { user: { id: userId } },
+      where: { user: { email: email }, is_active: true },
     });
 
     if (!vehicles.length) throw new NotFoundException('Vehicles not found for this user');
+
+    for (const vehicle of vehicles) {
+      delete vehicle.id;
+      delete vehicle.created_at;
+    }
 
     return { vehicles };
   }
@@ -87,10 +98,14 @@ export class VehiclesService {
     return { vehicle };
   }
 
-  async remove(id: string) {
-    await this.vehicleRepository.update(id, { is_active: false });
+  async remove(plateNumber: string) {
+    await this.vehicleRepository.update({ plate_number: plateNumber }, { is_active: false });
 
-    const { vehicle } = await this.findOne(id);
+    const vehicle = await this.vehicleRepository.findOneBy({ plate_number: plateNumber });
+
+    delete vehicle.id;
+    delete vehicle.user;
+    delete vehicle.created_at;
 
     return { vehicle };
   }

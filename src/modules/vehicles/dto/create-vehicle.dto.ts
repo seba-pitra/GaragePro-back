@@ -12,7 +12,4 @@ export class CreateVehicleDto {
   @IsString()
   @MaxLength(100)
   color: string;
-
-  @IsString()
-  userId: string;
 }
