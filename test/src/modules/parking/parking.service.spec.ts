@@ -8,7 +8,11 @@ import { Reservation } from '@/modules/parking/entities/reservation.entity';
 import { ReservationSlot } from '@/modules/parking/entities/reservation-slot.entity';
 import { ParkingService } from '@/modules/parking/parking.service';
 import { ParkingSlotsService } from '@/modules/parking-slots/parking-slots.service';
-import { createReservationData, createUserData } from '../../../database/create-data';
+import {
+  createParkingSlotData,
+  createReservationData,
+  createUserData,
+} from '../../../database/create-data';
 import { createTestDatabase } from '../../../database/init';
 import { getCreateReservationDto } from '../../../database/dtos';
 import { ParkingSlotsModule } from '@/modules/parking-slots/parking-slots.module';
@@ -79,12 +83,74 @@ describe('Parking Service', () => {
   });
 
   it('should have proper methods', () => {
+    expect(parkingService.getAvailableTimeSlots).toBeDefined();
     expect(parkingService.createTotalCost).toBeDefined();
     expect(parkingService.findAll).toBeDefined();
     expect(parkingService.findOneReservation).toBeDefined();
     expect(parkingService.findOneReservationSlot).toBeDefined();
     expect(parkingService.reserve).toBeDefined();
     expect(parkingService.unoccupy).toBeDefined();
+  });
+
+  it('getAvailableTimeSlots should return a list of available times', async () => {
+    const date = new Date().toISOString().split('T')[0];
+    const slot = 'A2';
+
+    await createParkingSlotData(dataSource, { slotCode: slot });
+
+    const result = await parkingService.getAvailableTimeSlots(date, slot);
+
+    expect(result).toEqual([
+      { start: '08:00', end: '09:00' },
+      { start: '09:00', end: '10:00' },
+      { start: '10:00', end: '11:00' },
+      { start: '11:00', end: '12:00' },
+      { start: '12:00', end: '13:00' },
+      { start: '13:00', end: '14:00' },
+      { start: '14:00', end: '15:00' },
+      { start: '15:00', end: '16:00' },
+      { start: '16:00', end: '17:00' },
+      { start: '17:00', end: '18:00' },
+    ]);
+  });
+
+  it('getAvailableTimeSlots should not return a reserved time', async () => {
+    const date = new Date().toISOString().split('T')[0];
+    const slot = 'A2';
+    const createUserDto = {
+      email: 'test_reserve@gmail.com',
+      firstName: 'test_user',
+      lastName: 'test_lastnma',
+      password: 'testPassword1',
+      phone: '1111611111',
+    };
+
+    const [, user] = await Promise.all([
+      createParkingSlotData(dataSource, { slotCode: slot }),
+      createUserData(dataSource, createUserDto),
+    ]);
+
+    await parkingService.reserve(user, {
+      entryDate: date,
+      entryHour: '08:00',
+      exitDate: date,
+      exitHour: '09:00',
+      slotCode: slot,
+    });
+
+    const result = await parkingService.getAvailableTimeSlots(date, slot);
+
+    expect(result).toEqual([
+      { start: '09:00', end: '10:00' },
+      { start: '10:00', end: '11:00' },
+      { start: '11:00', end: '12:00' },
+      { start: '12:00', end: '13:00' },
+      { start: '13:00', end: '14:00' },
+      { start: '14:00', end: '15:00' },
+      { start: '15:00', end: '16:00' },
+      { start: '16:00', end: '17:00' },
+      { start: '17:00', end: '18:00' },
+    ]);
   });
 
   it('reserve should create a reservation', async () => {

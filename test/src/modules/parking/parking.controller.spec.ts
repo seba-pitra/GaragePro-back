@@ -22,6 +22,7 @@ describe('Parking Controller', () => {
   let service: ParkingService;
 
   const mockParkingService = {
+    getAvailableTimeSlots: jest.fn(),
     reserve: jest.fn(),
     createTotalCost: jest.fn(),
     findAll: jest.fn(),
@@ -47,6 +48,15 @@ describe('Parking Controller', () => {
 
   it('should be defined', () => {
     expect(controller).toBeDefined();
+  });
+
+  it('availableTimes should call service method', async () => {
+    const date = new Date().toISOString().split('T')[0];
+    const slot = 'A2';
+
+    await controller.availableTimes(date, slot);
+
+    expect(service.getAvailableTimeSlots).toHaveBeenCalledWith(date, slot);
   });
 
   it('reserve should call service method', async () => {
