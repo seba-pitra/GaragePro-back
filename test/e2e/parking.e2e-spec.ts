@@ -245,6 +245,23 @@ describe('Parking (e2e)', () => {
     });
   });
 
+  it('/GET /available-times should return an array of available times', async () => {
+    const date = new Date().toISOString().split('T')[0];
+    const slot = 'A2';
+
+    await createParkingSlotData(dataSource, { slotCode: slot });
+
+    const { body } = await request(app.getHttpServer())
+      .get(`/parking/available-times?date=${date}&slot=${slot}`)
+      .set('Authorization', `Bearer  ${token}`)
+      .expect(200);
+
+    expect(body).toHaveProperty('ok');
+    expect(body).toHaveProperty('timestamps');
+    expect(body).toHaveProperty('data');
+    expect(body.data).toMatchObject({});
+  });
+
   it('/GET /parking should return an array of reservations', async () => {
     await createReservationData(dataSource);
 
