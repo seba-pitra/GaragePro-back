@@ -24,8 +24,16 @@ export class ParkingSlotsService {
     return newSlot;
   }
 
-  findAll() {
-    return `This action returns all parkingSlots`;
+  async findAll() {
+    const slots = await this.parkingSlotRepository.find({});
+
+    if (!slots.length) throw new NotFoundException('Slots not found');
+
+    for (const slot of slots) {
+      delete slot.id;
+      delete slot.created_at;
+    }
+    return { slots };
   }
 
   async findOneBySlotCode(slotCode: string) {
@@ -33,7 +41,7 @@ export class ParkingSlotsService {
 
     if (!slot) throw new NotFoundException('Parking slot not found');
 
-    return slot;
+    return { slot };
   }
 
   async findOne(criteria: Partial<ParkingSlot>) {
@@ -41,7 +49,7 @@ export class ParkingSlotsService {
 
     if (!slot) throw new NotFoundException('Parking slot not found');
 
-    return slot;
+    return { slot };
   }
 
   async update(criteria: Partial<ParkingSlot>, updateParkingSlotDto: UpdateParkingSlotDto) {

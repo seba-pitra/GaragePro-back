@@ -9,10 +9,7 @@ import { createTestDatabase } from '../database/init';
 import { TransformResponseInterceptor } from '@/common/interceptors/transform-response.interceptor';
 import { HttpExceptionFilter } from '@/common/filters/http-exception.filters';
 import { ParkingSlotsModule } from '@/modules/parking-slots/parking-slots.module';
-import { Reservation } from '@/modules/parking/entities/reservation.entity';
 import { ReservationSlot } from '@/modules/parking/entities/reservation-slot.entity';
-import { ParkingSlot } from '@/modules/parking-slots/entities/parking-slot.entity';
-import { CreateReservationDto } from '@/modules/parking/dto/create-reservation.dto';
 import { ParkingModule } from '@/modules/parking/parking.module';
 import { UnoccupyReservationDto } from '@/modules/parking/dto/unoccupy-reservation.dto';
 import { Vehicle } from '@/modules/vehicles/entities/vehicle.entity';
@@ -21,6 +18,9 @@ import { UserModule } from '@/modules/users/user.module';
 import { CreateUserDto } from '@/modules/users/dto/create-user.dto';
 import { ValidRoles } from '@/modules/users/interfaces/valid-roles.interface';
 import { UpdateReservationDto } from '@/modules/parking/dto/update-reservation.dto';
+import { getCreateReservationDto } from '../database/dtos';
+import { Reservation } from '@/modules/parking/entities/reservation.entity';
+import { ParkingSlot } from '@/modules/parking-slots/entities/parking-slot.entity';
 
 describe('Parking (e2e)', () => {
   const dataSource = createTestDatabase();
@@ -103,16 +103,7 @@ describe('Parking (e2e)', () => {
     const createParkingSlotDto = { slotCode: 'A3' };
     const parkingSlot = await createParkingSlotData(dataSource, createParkingSlotDto);
 
-    const entry = new Date();
-    entry.setSeconds(entry.getSeconds() + 10);
-    const exit = new Date(entry);
-    exit.setHours(exit.getHours() + 1);
-
-    const createReservationDto: CreateReservationDto = {
-      entryTime: entry.toISOString(),
-      exitTime: exit.toISOString(),
-      slotCode: parkingSlot.slot_code,
-    };
+    const createReservationDto = getCreateReservationDto(parkingSlot.slot_code);
 
     const { body } = await request(app.getHttpServer())
       .post('/parking/reserve')
@@ -126,22 +117,26 @@ describe('Parking (e2e)', () => {
     expect(body.data).toMatchObject({
       id: expect.any(String),
       parking_slot: {
+        created_at: expect.any(String),
         id: expect.any(String),
-        slot_code: expect.any(String),
+        slot_code: parkingSlot.slot_code,
       },
       reservation: {
         actual_entry_time: null,
         actual_exit_time: null,
-        entry_time: createReservationDto.entryTime,
-        exit_time: createReservationDto.exitTime,
-        basic_cost: expect.any(Number),
+        basic_cost: 0,
         booking_date: expect.any(String),
+        created_at: expect.any(String),
         duration_in_minutes: expect.any(Number),
+        entry_time: expect.any(String),
+        exit_time: expect.any(String),
         id: expect.any(String),
         is_paid: null,
         penalty: null,
+        status: expect.any(String),
         total_cost: null,
         user: {
+          created_at: expect.any(String),
           email: expect.any(String),
           first_name: expect.any(String),
           id: expect.any(String),
@@ -159,17 +154,7 @@ describe('Parking (e2e)', () => {
     const createParkingSlotDto = { slotCode: 'A2' };
 
     const parkingSlot = await createParkingSlotData(dataSource, createParkingSlotDto);
-
-    const entry = new Date();
-    entry.setSeconds(entry.getSeconds() + 10);
-    const exit = new Date(entry);
-    exit.setHours(exit.getHours() + 1);
-
-    const createReservationDto: CreateReservationDto = {
-      entryTime: entry.toISOString(),
-      exitTime: exit.toISOString(),
-      slotCode: parkingSlot.slot_code,
-    };
+    const createReservationDto = getCreateReservationDto(parkingSlot.slot_code);
 
     await request(app.getHttpServer())
       .post('/parking/reserve')
@@ -196,11 +181,7 @@ describe('Parking (e2e)', () => {
   });
 
   it('/POST /parking/reserve should throw an error if parking slot does not exist', async () => {
-    const createReservationDto: CreateReservationDto = {
-      entryTime: new Date(new Date().getTime() + 10000).toISOString(),
-      exitTime: new Date(new Date().getTime() + 60000).toISOString(),
-      slotCode: 'fake',
-    };
+    const createReservationDto = getCreateReservationDto('fake');
 
     const { body } = await request(app.getHttpServer())
       .post('/parking/reserve')
@@ -262,6 +243,23 @@ describe('Parking (e2e)', () => {
       stracktrace: expect.any(String),
       timestamp: expect.any(String),
     });
+  });
+
+  it('/GET /available-times should return an array of available times', async () => {
+    const date = new Date().toISOString().split('T')[0];
+    const slot = 'A2';
+
+    await createParkingSlotData(dataSource, { slotCode: slot });
+
+    const { body } = await request(app.getHttpServer())
+      .get(`/parking/available-times?date=${date}&slot=${slot}`)
+      .set('Authorization', `Bearer  ${token}`)
+      .expect(200);
+
+    expect(body).toHaveProperty('ok');
+    expect(body).toHaveProperty('timestamps');
+    expect(body).toHaveProperty('data');
+    expect(body.data).toMatchObject({});
   });
 
   it('/GET /parking should return an array of reservations', async () => {
